@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    "transform-strict-mode",
+    "transform-async-to-generator",
+    "transform-es2015-spread",
+    "transform-es2015-parameters",
+    "transform-es2015-destructuring",
+    "transform-es2015-shorthand-properties"
+  ],
+  "env": {
+    "build": {
+      "plugins": [
+        "external-helpers"
+      ]
+    },
+    "test": {
+      "plugins": [
+        "transform-es2015-modules-commonjs"
+      ]
+    }
+  }
+}
