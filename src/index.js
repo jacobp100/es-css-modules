@@ -1,4 +1,7 @@
-import { reject, flow, forEach } from 'lodash/fp';
+import {
+  reject, flow, forEach, partial, map, castArray, keys, difference, isEmpty,
+} from 'lodash/fp';
+import { resolve } from 'path';
 import postcss from 'postcss';
 import removeClasses from 'postcss-remove-classes';
 import Core from 'css-modules-loader-core';
@@ -12,15 +15,23 @@ import saveJsExports from './saveJsExports';
 import { defaultParser, defaultParserOptions } from 'get-es-imports';
 
 
+const resolveCwd = partial(resolve, [process.cwd()]);
+const resolveCwds = flow(
+  castArray,
+  map(resolveCwd)
+);
+
+
 export default postcss.plugin('postcss-modules', ({
   moduleExportDirectory,
   jsFiles,
+  getJsExports = saveJsExports,
+  generateScopedName = generateHashedScopedName,
+  warnOnUnusedClasses = true,
+  removeUnusedClasses = true,
   recurse = true,
   parser = defaultParser,
   parserOptions = defaultParserOptions,
-  generateScopedName = generateHashedScopedName,
-  getJsExports = saveJsExports,
-  removeUnusedClasses,
   Loader,
 } = {}) => {
   let styleImportsPromise;
@@ -28,8 +39,8 @@ export default postcss.plugin('postcss-modules', ({
   const lazyGetDependencies = () => {
     if (!styleImportsPromise) {
       styleImportsPromise = getStyleImports({
-        moduleExportDirectory,
-        jsFiles,
+        moduleExportDirectory: resolveCwd(moduleExportDirectory),
+        jsFiles: resolveCwds(jsFiles),
         recurse,
         parser,
         parserOptions,
@@ -61,17 +72,35 @@ export default postcss.plugin('postcss-modules', ({
     const cssParser = new Parser(loader.fetch.bind(loader));
 
     return lazyGetDependencies()
-      .then(() => new Promise((res, rej) => {
+      .then((styleImports) => new Promise((res, rej) => {
+        const file = css.source.input.file;
+
         postcss([...plugins, cssParser.plugin, removeClasses([UNUSED_EXPORT])])
-          .process(css, { from: css.source.input.file })
+          .process(css, { from: file })
           .then(() => {
             forEach((source) => {
               css.prepend(source);
             }, loader.sources);
 
-            const styleExports = getStyleExports(cssParser.exportTokens);
+            const { exportTokens } = cssParser;
 
-            getJsExports(css.source.input.file, styleExports, cssParser.exportTokens);
+            const cssExports = keys(exportTokens);
+            const invalidImports = difference(styleImports, cssExports);
+            const unusedImports = difference(cssExports, styleImports);
+
+            if (warnOnUnusedClasses && !isEmpty(unusedImports)) {
+              result.warn(`Defined unused style(s) ${unusedImports.join(', ')} in ${file}`);
+            }
+
+            if (!isEmpty(invalidImports)) {
+              // TODO: We could be more helpful by saying what file tried to import it, but we don't
+              // have that information currently.
+              throw new Error(`Cannot import style(s) ${invalidImports.join(', ')} from ${file}`);
+            }
+
+            const styleExports = getStyleExports(exportTokens);
+
+            getJsExports(css.source.input.file, styleExports, exportTokens);
 
             res();
           }, rej);

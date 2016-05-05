@@ -3,6 +3,7 @@
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var lodash_fp = require('lodash/fp');
+var path = require('path');
 var postcss = _interopDefault(require('postcss'));
 var removeClasses = _interopDefault(require('postcss-remove-classes'));
 var Core = _interopDefault(require('css-modules-loader-core'));
@@ -11,7 +12,6 @@ var FileSystemLoader = _interopDefault(require('css-modules-loader-core/lib/file
 var stringHash = _interopDefault(require('string-hash'));
 var getEsImports = require('get-es-imports');
 var getEsImports__default = _interopDefault(getEsImports);
-var path = require('path');
 var fs = require('fs');
 var isJsKeyword = _interopDefault(require('is-keyword-js'));
 
@@ -190,6 +190,8 @@ var patchGetScopedName = ((Core, _ref) => {
 
       return value;
     };
+
+    return styleImports;
   };
 })
 
@@ -213,22 +215,26 @@ var saveJsExports = ((cssFile, js) => {
   fs.writeFileSync(`${ cssFile }.js`, js);
 })
 
+const resolveCwd = lodash_fp.partial(path.resolve, [process.cwd()]);
+const resolveCwds = lodash_fp.flow(lodash_fp.castArray, lodash_fp.map(resolveCwd));
+
 var index = postcss.plugin('postcss-modules', function () {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
   let moduleExportDirectory = _ref.moduleExportDirectory;
   let jsFiles = _ref.jsFiles;
+  var _ref$getJsExports = _ref.getJsExports;
+  let getJsExports = _ref$getJsExports === undefined ? saveJsExports : _ref$getJsExports;
+  var _ref$generateScopedNa = _ref.generateScopedName;
+  let generateScopedName = _ref$generateScopedNa === undefined ? generateHashedScopedName : _ref$generateScopedNa;
+  var _ref$removeUnusedClas = _ref.removeUnusedClasses;
+  let removeUnusedClasses = _ref$removeUnusedClas === undefined ? true : _ref$removeUnusedClas;
   var _ref$recurse = _ref.recurse;
   let recurse = _ref$recurse === undefined ? true : _ref$recurse;
   var _ref$parser = _ref.parser;
   let parser = _ref$parser === undefined ? getEsImports.defaultParser : _ref$parser;
   var _ref$parserOptions = _ref.parserOptions;
   let parserOptions = _ref$parserOptions === undefined ? getEsImports.defaultParserOptions : _ref$parserOptions;
-  var _ref$generateScopedNa = _ref.generateScopedName;
-  let generateScopedName = _ref$generateScopedNa === undefined ? generateHashedScopedName : _ref$generateScopedNa;
-  var _ref$getJsExports = _ref.getJsExports;
-  let getJsExports = _ref$getJsExports === undefined ? saveJsExports : _ref$getJsExports;
-  let removeUnusedClasses = _ref.removeUnusedClasses;
   let Loader = _ref.Loader;
 
   let styleImportsPromise;
@@ -236,8 +242,8 @@ var index = postcss.plugin('postcss-modules', function () {
   const lazyGetDependencies = () => {
     if (!styleImportsPromise) {
       styleImportsPromise = getStyleImports({
-        moduleExportDirectory: moduleExportDirectory,
-        jsFiles: jsFiles,
+        moduleExportDirectory: resolveCwd(moduleExportDirectory),
+        jsFiles: resolveCwds(jsFiles),
         recurse: recurse,
         parser: parser,
         parserOptions: parserOptions
@@ -259,15 +265,34 @@ var index = postcss.plugin('postcss-modules', function () {
 
     const cssParser = new Parser(loader.fetch.bind(loader));
 
-    return lazyGetDependencies().then(() => new Promise((res, rej) => {
-      postcss([].concat(babelHelpers.toConsumableArray(plugins), [cssParser.plugin, removeClasses([UNUSED_EXPORT])])).process(css, { from: css.source.input.file }).then(() => {
+    return lazyGetDependencies().then(styleImports => new Promise((res, rej) => {
+      const file = css.source.input.file;
+
+      postcss([].concat(babelHelpers.toConsumableArray(plugins), [cssParser.plugin, removeClasses([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
         lodash_fp.forEach(source => {
           css.prepend(source);
         }, loader.sources);
 
-        const styleExports = getStyleExports(cssParser.exportTokens);
+        const exportTokens = cssParser.exportTokens;
 
-        getJsExports(css.source.input.file, styleExports, cssParser.exportTokens);
+
+        const cssExports = lodash_fp.keys(exportTokens);
+        const invalidImports = lodash_fp.difference(styleImports, cssExports);
+        const unusedImports = lodash_fp.difference(cssExports, styleImports);
+
+        if (unusedImports.length) {
+          result.warn(`Defined unused style(s) ${ unusedImports.join(', ') } in ${ file }`);
+        }
+
+        if (invalidImports.length) {
+          // TODO: We could be more helpful by saying what file tried to import it, but we don't
+          // have that information currently.
+          throw new Error(`Cannot import style(s) ${ invalidImports.join(', ') } from ${ file }`);
+        }
+
+        const styleExports = getStyleExports(exportTokens);
+
+        getJsExports(css.source.input.file, styleExports, exportTokens);
 
         res();
       }, rej);

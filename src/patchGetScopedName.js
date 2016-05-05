@@ -45,4 +45,6 @@ export default (Core, { removeUnusedClasses, generateScopedName }) => (styleImpo
 
     return value;
   };
+
+  return styleImports;
 };
