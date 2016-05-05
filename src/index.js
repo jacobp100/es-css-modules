@@ -1,5 +1,5 @@
 import {
-  reject, flow, forEach, partial, map, castArray, keys, difference, isEmpty,
+  reject, flow, forEach, partial, map, castArray, keys, difference, isEmpty, without,
 } from 'lodash/fp';
 import { resolve } from 'path';
 import postcss from 'postcss';
@@ -13,6 +13,9 @@ import patchGetScopedName, { UNUSED_EXPORT } from './patchGetScopedName';
 import getStyleExports from './getStyleExports';
 import saveJsExports from './saveJsExports';
 import { defaultParser, defaultParserOptions } from 'get-es-imports';
+
+
+export { defaultParser, defaultParserOptions, UNUSED_EXPORT };
 
 
 const resolveCwd = partial(resolve, [process.cwd()]);
@@ -74,6 +77,7 @@ export default postcss.plugin('postcss-modules', ({
     return lazyGetDependencies()
       .then((styleImports) => new Promise((res, rej) => {
         const file = css.source.input.file;
+        const jsExports = styleImports[`${file}.js`];
 
         postcss([...plugins, cssParser.plugin, removeClasses([UNUSED_EXPORT])])
           .process(css, { from: file })
@@ -84,18 +88,32 @@ export default postcss.plugin('postcss-modules', ({
 
             const { exportTokens } = cssParser;
 
-            const cssExports = keys(exportTokens);
-            const invalidImports = difference(styleImports, cssExports);
-            const unusedImports = difference(cssExports, styleImports);
-
-            if (warnOnUnusedClasses && !isEmpty(unusedImports)) {
-              result.warn(`Defined unused style(s) ${unusedImports.join(', ')} in ${file}`);
+            if (!jsExports && !isEmpty(exportTokens)) {
+              result.warn('Defined local styles, was never imported');
             }
+
+            const jsExportsWithoutNs = without(jsExports, '*');
+
+            if (isEmpty(jsExportsWithoutNs)) {
+              res();
+              return;
+            }
+
+            const cssExports = keys(exportTokens);
+            const invalidImports = difference(jsExportsWithoutNs, cssExports);
 
             if (!isEmpty(invalidImports)) {
               // TODO: We could be more helpful by saying what file tried to import it, but we don't
               // have that information currently.
               throw new Error(`Cannot import style(s) ${invalidImports.join(', ')} from ${file}`);
+            }
+
+            if (warnOnUnusedClasses) {
+              const unusedImports = difference(cssExports, jsExportsWithoutNs);
+
+              forEach((unusedImport) => {
+                result.warn(`Defined unused style "${unusedImport}"`);
+              }, unusedImports);
             }
 
             const styleExports = getStyleExports(exportTokens);

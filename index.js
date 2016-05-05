@@ -227,6 +227,8 @@ var index = postcss.plugin('postcss-modules', function () {
   let getJsExports = _ref$getJsExports === undefined ? saveJsExports : _ref$getJsExports;
   var _ref$generateScopedNa = _ref.generateScopedName;
   let generateScopedName = _ref$generateScopedNa === undefined ? generateHashedScopedName : _ref$generateScopedNa;
+  var _ref$warnOnUnusedClas = _ref.warnOnUnusedClasses;
+  let warnOnUnusedClasses = _ref$warnOnUnusedClas === undefined ? true : _ref$warnOnUnusedClas;
   var _ref$removeUnusedClas = _ref.removeUnusedClasses;
   let removeUnusedClasses = _ref$removeUnusedClas === undefined ? true : _ref$removeUnusedClas;
   var _ref$recurse = _ref.recurse;
@@ -267,6 +269,7 @@ var index = postcss.plugin('postcss-modules', function () {
 
     return lazyGetDependencies().then(styleImports => new Promise((res, rej) => {
       const file = css.source.input.file;
+      const jsExports = styleImports[`${ file }.js`];
 
       postcss([].concat(babelHelpers.toConsumableArray(plugins), [cssParser.plugin, removeClasses([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
         lodash_fp.forEach(source => {
@@ -276,18 +279,32 @@ var index = postcss.plugin('postcss-modules', function () {
         const exportTokens = cssParser.exportTokens;
 
 
-        const cssExports = lodash_fp.keys(exportTokens);
-        const invalidImports = lodash_fp.difference(styleImports, cssExports);
-        const unusedImports = lodash_fp.difference(cssExports, styleImports);
-
-        if (unusedImports.length) {
-          result.warn(`Defined unused style(s) ${ unusedImports.join(', ') } in ${ file }`);
+        if (!jsExports && !lodash_fp.isEmpty(exportTokens)) {
+          result.warn('Defined local styles, was never imported');
         }
 
-        if (invalidImports.length) {
+        const jsExportsWithoutNs = lodash_fp.without(jsExports, '*');
+
+        if (lodash_fp.isEmpty(jsExportsWithoutNs)) {
+          res();
+          return;
+        }
+
+        const cssExports = lodash_fp.keys(exportTokens);
+        const invalidImports = lodash_fp.difference(jsExportsWithoutNs, cssExports);
+
+        if (!lodash_fp.isEmpty(invalidImports)) {
           // TODO: We could be more helpful by saying what file tried to import it, but we don't
           // have that information currently.
           throw new Error(`Cannot import style(s) ${ invalidImports.join(', ') } from ${ file }`);
+        }
+
+        if (warnOnUnusedClasses) {
+          const unusedImports = lodash_fp.difference(cssExports, jsExportsWithoutNs);
+
+          lodash_fp.forEach(unusedImport => {
+            result.warn(`Defined unused style "${ unusedImport }"`);
+          }, unusedImports);
         }
 
         const styleExports = getStyleExports(exportTokens);
@@ -300,4 +317,7 @@ var index = postcss.plugin('postcss-modules', function () {
   };
 });
 
-module.exports = index;
+exports.defaultParser = getEsImports.defaultParser;
+exports.defaultParserOptions = getEsImports.defaultParserOptions;
+exports.UNUSED_EXPORT = UNUSED_EXPORT;
+exports['default'] = index;

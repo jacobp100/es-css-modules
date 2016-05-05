@@ -1,0 +1,12 @@
+.default {
+  composes: bgWhite from '../base-styles/base.css';
+  border: none;
+  margin: 0;
+  padding: 0.5em 1em;
+  border: 0;
+  transition: background 0.1s;
+}
+
+.primary {
+  composes: bgBlue from '../base-styles/base.css';
+}

@@ -1,0 +1,15 @@
+.bgWhite {
+  background: #CCD1D9;
+}
+
+.bgWhite:hover {
+  background: #AAB2BD;
+}
+
+.bgBlue {
+  background: #5D9CEC;
+}
+
+.bgBlue:hover {
+  background: #4A89DC;
+}
