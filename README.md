@@ -1,3 +1,5 @@
+![PostCSS Modules ES](https://raw.githubusercontent.com/jacobp100/postcss-modules-es/master/assets/logo.png)
+
 # PostCSS Modules ES
 
 # What and Why?
