@@ -41,9 +41,9 @@ As a minimum, you must define the parameters `jsFiles` and `moduleExportDirector
 
 Both these parameters can be absolute paths, or a path relative to `process.cwd()`.
 
-**By default, all your css files will generate a css.js file with the export names**. This behaviour can be customised via `getJsExports`, which is a function that is called with `(cssFilename, styleExports, styleExportsObject)`, where styleExports is a string of a JavaScript file that specifies the exports, and styleExportsObject is an object whose keys is the export name, and values the corresponding export value.
+**By default, all your css files will generate a css.js file with the export names**. I.e. `export const button = "x3f6u";`. This behaviour can be customised via `getJsExports`, which is a function that is called with `(cssFilename, styleExports, styleExportsObject)`, where styleExports is JavaScript file string that specifies the exports, and styleExportsObject is an object whose keys is the export name, and values the corresponding export value.
 
-As in default CSS modules, we generate a random-ish name for each class you define. To configure how classes are generated, you can specify the `generateScopedName` parameter, which is a function called with `(className, filename)`.
+As in default CSS modules, we generate a random-ish name for each class you define. To configure how classes are generated, you can specify the `generateScopedName` parameter, which is a function called with `(className, filename)`. This function is only called for classes that will actually be used, so it's perfectly safe to use something like [CSS Class Generator](https://github.com/jacobp100/css-class-generator) to generate names.
 
 By default, we'll warn you when you don't use a class you've defined. This can be turned off via `warnOnUnusedClasses`.
 
