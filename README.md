@@ -51,4 +51,20 @@ We’ll also remove unused classes in the CSS files. To turn this off, set the p
 
 As stated before, `jsFiles` will recursively look for imports. This can be disabled via the `recurse` parameter.
 
-We use the parser used for ESLint and a default configuration that works for React. If you need to override the parser options, you can specify `parserOptions` using the [ESLint format](http://eslint.org/docs/user-guide/configuring#specifying-parser-options). You can also specify the entire parser via the `parser` property. To set the parser to babel-eslint, use the following,
+We use the parser used for ESLint and a default configuration that works for React. If you need to override the parser options, you can specify `parserOptions` using the [ESLint format](http://eslint.org/docs/user-guide/configuring#specifying-parser-options). You can also specify the entire parser via the `parser` property: to use babel-eslint, set the `parser` to `'babel-eslint'`.
+
+The complete options are as follows,
+
+```js
+modulesEs({
+  moduleExportDirectory,
+  jsFiles,
+  getJsExports,
+  generateScopedName,
+  warnOnUnusedClasses,
+  removeUnusedClasses,
+  recurse,
+  parser,
+  parserOptions,
+})
+```
