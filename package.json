@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test ava --verbose --timeout 2s",
-    "build": "NODE_ENV=build rollup -c rollup.config.js"
+    "test": "ava --verbose --timeout 2s",
+    "build": "rollup -c rollup.config.js && babel index.js -o index.js"
   },
   "keywords": [],
   "author": "",
@@ -22,9 +22,9 @@
   "devDependencies": {
     "ava": "^0.14.0",
     "babel": "^6.5.2",
+    "babel-cli": "^6.8.0",
     "babel-core": "^6.7.6",
     "babel-eslint": "^6.0.4",
-    "babel-plugin-external-helpers": "^6.5.0",
     "babel-plugin-transform-async-to-generator": "^6.7.4",
     "babel-plugin-transform-es2015-destructuring": "^6.6.5",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.7.7",

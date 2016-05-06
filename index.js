@@ -1,37 +1,71 @@
 'use strict';
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UNUSED_EXPORT = exports.defaultParserOptions = exports.defaultParser = undefined;
 
-var lodash_fp = require('lodash/fp');
-var path = require('path');
-var postcss = _interopDefault(require('postcss'));
-var removeClasses = _interopDefault(require('postcss-remove-classes'));
-var Core = _interopDefault(require('css-modules-loader-core'));
-var Parser = _interopDefault(require('css-modules-loader-core/lib/parser'));
-var FileSystemLoader = _interopDefault(require('css-modules-loader-core/lib/file-system-loader'));
-var stringHash = _interopDefault(require('string-hash'));
-var getEsImports = require('get-es-imports');
-var getEsImports__default = _interopDefault(getEsImports);
-var fs = require('fs');
-var lodash = require('lodash');
-var isJsKeyword = _interopDefault(require('is-keyword-js'));
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-var babelHelpers = {};
+var _fp = require('lodash/fp');
 
-babelHelpers.asyncToGenerator = function (fn) {
+var _path = require('path');
+
+var _postcss = require('postcss');
+
+var _postcss2 = _interopRequireDefault(_postcss);
+
+var _postcssRemoveClasses = require('postcss-remove-classes');
+
+var _postcssRemoveClasses2 = _interopRequireDefault(_postcssRemoveClasses);
+
+var _cssModulesLoaderCore = require('css-modules-loader-core');
+
+var _cssModulesLoaderCore2 = _interopRequireDefault(_cssModulesLoaderCore);
+
+var _parser = require('css-modules-loader-core/lib/parser');
+
+var _parser2 = _interopRequireDefault(_parser);
+
+var _fileSystemLoader = require('css-modules-loader-core/lib/file-system-loader');
+
+var _fileSystemLoader2 = _interopRequireDefault(_fileSystemLoader);
+
+var _stringHash = require('string-hash');
+
+var _stringHash2 = _interopRequireDefault(_stringHash);
+
+var _getEsImports = require('get-es-imports');
+
+var _getEsImports2 = _interopRequireDefault(_getEsImports);
+
+var _fs = require('fs');
+
+var _lodash = require('lodash');
+
+var _isKeywordJs = require('is-keyword-js');
+
+var _isKeywordJs2 = _interopRequireDefault(_isKeywordJs);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+
+var generateHashedScopedName = (name, filename) => {
+  const hash = (0, _stringHash2.default)(filename).toString(36).substr(0, 5);
+
+  return `_${ name }_${ hash }`;
+};
+
+function _asyncToGenerator(fn) {
   return function () {
-    var gen = fn.apply(this, arguments);
-    return new Promise(function (resolve, reject) {
+    var gen = fn.apply(this, arguments);return new Promise(function (resolve, reject) {
       function step(key, arg) {
         try {
-          var info = gen[key](arg);
-          var value = info.value;
+          var info = gen[key](arg);var value = info.value;
         } catch (error) {
-          reject(error);
-          return;
-        }
-
-        if (info.done) {
+          reject(error);return;
+        }if (info.done) {
           resolve(value);
         } else {
           return Promise.resolve(value).then(function (value) {
@@ -40,100 +74,42 @@ babelHelpers.asyncToGenerator = function (fn) {
             return step("throw", err);
           });
         }
-      }
-
-      return step("next");
+      }return step("next");
     });
   };
-};
-
-babelHelpers.slicedToArray = function () {
-  function sliceIterator(arr, i) {
-    var _arr = [];
-    var _n = true;
-    var _d = false;
-    var _e = undefined;
-
-    try {
-      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-        _arr.push(_s.value);
-
-        if (i && _arr.length === i) break;
-      }
-    } catch (err) {
-      _d = true;
-      _e = err;
-    } finally {
-      try {
-        if (!_n && _i["return"]) _i["return"]();
-      } finally {
-        if (_d) throw _e;
-      }
-    }
-
-    return _arr;
-  }
-
-  return function (arr, i) {
-    if (Array.isArray(arr)) {
-      return arr;
-    } else if (Symbol.iterator in Object(arr)) {
-      return sliceIterator(arr, i);
-    } else {
-      throw new TypeError("Invalid attempt to destructure non-iterable instance");
-    }
-  };
-}();
-
-babelHelpers.toConsumableArray = function (arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-    return arr2;
-  } else {
-    return Array.from(arr);
-  }
-};
-
-babelHelpers;
-
-var generateHashedScopedName = ((name, filename) => {
-  const hash = stringHash(filename).toString(36).substr(0, 5);
-
-  return `_${ name }_${ hash }`;
-})
+}
 
 var getStyleImports = (() => {
-  var ref = babelHelpers.asyncToGenerator(function* (_ref) {
+  var ref = _asyncToGenerator(function* (_ref) {
     let moduleExportDirectory = _ref.moduleExportDirectory;
     let files = _ref.jsFiles;
     let recurse = _ref.recurse;
     let parser = _ref.parser;
     let parserOptions = _ref.parserOptions;
 
-    if (!path.isAbsolute(moduleExportDirectory)) {
+    if (!(0, _path.isAbsolute)(moduleExportDirectory)) {
       throw new Error('Expected moduleExportsDirectory to be an absolute path');
     }
 
-    const isInModuleExportsDirectory = lodash_fp.flow(lodash_fp.partial(path.relative, [moduleExportDirectory]), lodash_fp.negate(lodash_fp.startsWith('..')));
+    const isInModuleExportsDirectory = (0, _fp.flow)((0, _fp.partial)(_path.relative, [moduleExportDirectory]), (0, _fp.negate)((0, _fp.startsWith)('..')));
 
     const isFile = function (path, cb) {
       if (isInModuleExportsDirectory(path)) {
-        cb(null, lodash_fp.endsWith('.css.js', path));
+        cb(null, (0, _fp.endsWith)('.css.js', path));
         return;
       }
 
-      fs.stat(path, function (err, s) {
+      (0, _fs.stat)(path, function (err, s) {
         if (err && err.code === 'ENOENT') cb(null, false);else if (err) cb(err);else cb(null, s.isFile());
       });
     };
 
-    var _ref2 = yield getEsImports__default({
+    var _ref2 = yield (0, _getEsImports2.default)({
       files: files,
       recurse: recurse,
       parser: parser,
       parserOptions: parserOptions,
-      exclude: path.join(moduleExportDirectory, '/**/*'),
+      exclude: (0, _path.join)(moduleExportDirectory, '/**/*'),
       resolveOptions: {
         extensions: ['.js', '.json'],
         isFile: isFile
@@ -143,10 +119,11 @@ var getStyleImports = (() => {
     const dependencies = _ref2.dependencies;
 
 
-    const styleImports = lodash_fp.flow(lodash_fp.toPairs, lodash_fp.filter(lodash_fp.flow(lodash_fp.first, isInModuleExportsDirectory)), lodash_fp.fromPairs)(dependencies);
+    const styleImports = (0, _fp.flow)(_fp.toPairs, (0, _fp.filter)((0, _fp.flow)(_fp.first, isInModuleExportsDirectory)), _fp.fromPairs)(dependencies);
 
     return styleImports;
   });
+
   return function (_x) {
     return ref.apply(this, arguments);
   };
@@ -157,14 +134,14 @@ const UNUSED_EXPORT = 'UNUSED_EXPORT';
 const jsValidIdent = /^[$A-Z_][0-9A-Z_$]*$/i;
 const isValidJsIdent = value => jsValidIdent.test(value);
 
-const isValidClassname = lodash_fp.overEvery([isValidJsIdent, lodash_fp.overSome([lodash_fp.equals('default'), lodash_fp.negate(isJsKeyword)])]);
+const isValidClassname = (0, _fp.overEvery)([isValidJsIdent, (0, _fp.overSome)([(0, _fp.equals)('default'), (0, _fp.negate)(_isKeywordJs2.default)])]);
 
-const hasNamespaceImport = lodash_fp.includes('*');
+const hasNamespaceImport = (0, _fp.includes)('*');
 
-var patchGetScopedName = ((Core, _ref) => {
-  let removeUnusedClasses = _ref.removeUnusedClasses;
-  let generateScopedName = _ref.generateScopedName;
-  let file = _ref.file;
+var patchGetScopedName = (Core, _ref3) => {
+  let removeUnusedClasses = _ref3.removeUnusedClasses;
+  let generateScopedName = _ref3.generateScopedName;
+  let file = _ref3.file;
   return styleImports => {
     // We mutate these objects, and return an object that will later be mutated
     const scopedNames = {};
@@ -190,69 +167,69 @@ var patchGetScopedName = ((Core, _ref) => {
 
       const type = isClass ? 'class' : 'animation';
 
-      const currentValue = lodash_fp.get([exportFile, name], scopedNames);
+      const currentValue = (0, _fp.get)([exportFile, name], scopedNames);
 
       if (currentValue) return currentValue;
 
-      if (removeUnusedClasses && file === filename && !isAnimation && !lodash_fp.includes(name, styleImport) && !hasNamespaceImport(styleImport)) {
+      if (removeUnusedClasses && file === filename && !isAnimation && !(0, _fp.includes)(name, styleImport) && !hasNamespaceImport(styleImport)) {
         return UNUSED_EXPORT;
       }
 
       const value = generateScopedName(name, filename, css);
 
-      lodash.set(scopedNames, [exportFile, name], value);
-      lodash.set(typesPerName, [name], type);
+      (0, _lodash.set)(scopedNames, [exportFile, name], value);
+      (0, _lodash.set)(typesPerName, [name], type);
 
       return value;
     };
 
     return { styleImports: styleImports, typesPerName: typesPerName };
   };
-})
+};
 
-const defaultExport = _ref => {
-  var _ref2 = babelHelpers.slicedToArray(_ref, 2);
+const defaultExport = _ref4 => {
+  var _ref5 = _slicedToArray(_ref4, 2);
 
-  let exportName = _ref2[1];
+  let exportName = _ref5[1];
   return `export default '${ exportName }';\n`;
 };
-const constExport = _ref3 => {
-  var _ref4 = babelHelpers.slicedToArray(_ref3, 2);
+const constExport = _ref6 => {
+  var _ref7 = _slicedToArray(_ref6, 2);
 
-  let importName = _ref4[0];
-  let exportName = _ref4[1];
+  let importName = _ref7[0];
+  let exportName = _ref7[1];
   return `export const ${ importName } = '${ exportName }';\n`;
 };
 
-var getStyleExports = lodash_fp.flow(lodash_fp.toPairs, lodash_fp.map(lodash_fp.cond([[lodash_fp.flow(lodash_fp.first, lodash_fp.equals('default')), defaultExport], [lodash_fp.constant(true), constExport]])), values => values.join(''));
+var getStyleExports = (0, _fp.flow)(_fp.toPairs, (0, _fp.map)((0, _fp.cond)([[(0, _fp.flow)(_fp.first, (0, _fp.equals)('default')), defaultExport], [(0, _fp.constant)(true), constExport]])), values => values.join(''));
 
-var saveJsExports = ((cssFile, js) => {
-  fs.writeFileSync(`${ cssFile }.js`, js);
-})
+var saveJsExports = (cssFile, js) => {
+  (0, _fs.writeFileSync)(`${ cssFile }.js`, js);
+};
 
-const resolveCwd = lodash_fp.partial(path.resolve, [process.cwd()]);
-const resolveCwds = lodash_fp.flow(lodash_fp.castArray, lodash_fp.map(resolveCwd));
+const resolveCwd = (0, _fp.partial)(_path.resolve, [process.cwd()]);
+const resolveCwds = (0, _fp.flow)(_fp.castArray, (0, _fp.map)(resolveCwd));
 
-var index = postcss.plugin('postcss-modules', function () {
-  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+var index = _postcss2.default.plugin('postcss-modules', function () {
+  var _ref8 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-  let moduleExportDirectory = _ref.moduleExportDirectory;
-  let jsFiles = _ref.jsFiles;
-  var _ref$getJsExports = _ref.getJsExports;
-  let getJsExports = _ref$getJsExports === undefined ? saveJsExports : _ref$getJsExports;
-  var _ref$generateScopedNa = _ref.generateScopedName;
-  let generateScopedName = _ref$generateScopedNa === undefined ? generateHashedScopedName : _ref$generateScopedNa;
-  var _ref$warnOnUnusedClas = _ref.warnOnUnusedClasses;
-  let warnOnUnusedClasses = _ref$warnOnUnusedClas === undefined ? true : _ref$warnOnUnusedClas;
-  var _ref$removeUnusedClas = _ref.removeUnusedClasses;
-  let removeUnusedClasses = _ref$removeUnusedClas === undefined ? true : _ref$removeUnusedClas;
-  var _ref$recurse = _ref.recurse;
-  let recurse = _ref$recurse === undefined ? true : _ref$recurse;
-  var _ref$parser = _ref.parser;
-  let parser = _ref$parser === undefined ? getEsImports.defaultParser : _ref$parser;
-  var _ref$parserOptions = _ref.parserOptions;
-  let parserOptions = _ref$parserOptions === undefined ? getEsImports.defaultParserOptions : _ref$parserOptions;
-  let Loader = _ref.Loader;
+  let moduleExportDirectory = _ref8.moduleExportDirectory;
+  let jsFiles = _ref8.jsFiles;
+  var _ref8$getJsExports = _ref8.getJsExports;
+  let getJsExports = _ref8$getJsExports === undefined ? saveJsExports : _ref8$getJsExports;
+  var _ref8$generateScopedN = _ref8.generateScopedName;
+  let generateScopedName = _ref8$generateScopedN === undefined ? generateHashedScopedName : _ref8$generateScopedN;
+  var _ref8$warnOnUnusedCla = _ref8.warnOnUnusedClasses;
+  let warnOnUnusedClasses = _ref8$warnOnUnusedCla === undefined ? true : _ref8$warnOnUnusedCla;
+  var _ref8$removeUnusedCla = _ref8.removeUnusedClasses;
+  let removeUnusedClasses = _ref8$removeUnusedCla === undefined ? true : _ref8$removeUnusedCla;
+  var _ref8$recurse = _ref8.recurse;
+  let recurse = _ref8$recurse === undefined ? true : _ref8$recurse;
+  var _ref8$parser = _ref8.parser;
+  let parser = _ref8$parser === undefined ? _getEsImports.defaultParser : _ref8$parser;
+  var _ref8$parserOptions = _ref8.parserOptions;
+  let parserOptions = _ref8$parserOptions === undefined ? _getEsImports.defaultParserOptions : _ref8$parserOptions;
+  let Loader = _ref8.Loader;
 
   let styleImportsPromise;
 
@@ -271,57 +248,57 @@ var index = postcss.plugin('postcss-modules', function () {
   };
 
   return (css, result) => {
-    const resultPlugins = lodash_fp.flow(lodash_fp.reject({ postcssPlugin: 'postcss-modules' }), lodash_fp.reject({ postcssPlugin: 'postcss-modules-es' }))(result.processor.plugins);
+    const resultPlugins = (0, _fp.flow)((0, _fp.reject)({ postcssPlugin: 'postcss-modules' }), (0, _fp.reject)({ postcssPlugin: 'postcss-modules-es' }))(result.processor.plugins);
 
-    const plugins = [].concat(babelHelpers.toConsumableArray(Core.defaultPlugins), babelHelpers.toConsumableArray(resultPlugins));
+    const plugins = [].concat(_toConsumableArray(_cssModulesLoaderCore2.default.defaultPlugins), _toConsumableArray(resultPlugins));
 
-    const loader = typeof Loader === 'function' ? new Loader('/', plugins) : new FileSystemLoader('/', plugins);
+    const loader = typeof Loader === 'function' ? new Loader('/', plugins) : new _fileSystemLoader2.default('/', plugins);
 
-    const cssParser = new Parser(loader.fetch.bind(loader));
+    const cssParser = new _parser2.default(loader.fetch.bind(loader));
 
     const file = css.source.input.file;
 
-    return lazyGetDependencies().then(patchGetScopedName(Core, {
+    return lazyGetDependencies().then(patchGetScopedName(_cssModulesLoaderCore2.default, {
       removeUnusedClasses: removeUnusedClasses,
       generateScopedName: generateScopedName,
       file: file
-    })).then(_ref2 => {
-      let styleImports = _ref2.styleImports;
-      let typesPerName = _ref2.typesPerName;
+    })).then(_ref9 => {
+      let styleImports = _ref9.styleImports;
+      let typesPerName = _ref9.typesPerName;
       return new Promise((res, rej) => {
         const jsExports = styleImports[`${ file }.js`];
 
-        postcss([].concat(babelHelpers.toConsumableArray(plugins), [cssParser.plugin, removeClasses([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
-          lodash_fp.forEach(source => {
+        (0, _postcss2.default)([].concat(_toConsumableArray(plugins), [cssParser.plugin, (0, _postcssRemoveClasses2.default)([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
+          (0, _fp.forEach)(source => {
             css.prepend(source);
           }, loader.sources);
         }).then(() => {
           const exportTokens = cssParser.exportTokens;
 
 
-          if (!jsExports && !lodash_fp.isEmpty(exportTokens)) {
+          if (!jsExports && !(0, _fp.isEmpty)(exportTokens)) {
             result.warn('Defined local styles, but the css file was never imported');
           }
 
-          const jsExportsWithoutNs = lodash_fp.without(jsExports, '*');
+          const jsExportsWithoutNs = (0, _fp.without)(jsExports, '*');
 
-          if (lodash_fp.isEmpty(jsExportsWithoutNs)) {
+          if ((0, _fp.isEmpty)(jsExportsWithoutNs)) {
             return;
           }
 
-          const cssExports = lodash_fp.flow(lodash_fp.keys, lodash_fp.filter(name => typesPerName[name] !== 'animation'))(exportTokens);
-          const invalidImports = lodash_fp.difference(jsExportsWithoutNs, cssExports);
+          const cssExports = (0, _fp.flow)(_fp.keys, (0, _fp.filter)(name => typesPerName[name] !== 'animation'))(exportTokens);
+          const invalidImports = (0, _fp.difference)(jsExportsWithoutNs, cssExports);
 
-          if (!lodash_fp.isEmpty(invalidImports)) {
+          if (!(0, _fp.isEmpty)(invalidImports)) {
             // TODO: We could be more helpful by saying what file tried to import it, but we don't
             // have that information currently.
             throw new Error(`Cannot import style(s) ${ invalidImports.join(', ') } from ${ file }`);
           }
 
           if (warnOnUnusedClasses) {
-            const unusedImports = lodash_fp.difference(cssExports, jsExportsWithoutNs);
+            const unusedImports = (0, _fp.difference)(cssExports, jsExportsWithoutNs);
 
-            lodash_fp.forEach(unusedImport => {
+            (0, _fp.forEach)(unusedImport => {
               result.warn(`Defined unused style "${ unusedImport }"`);
             }, unusedImports);
           }
@@ -338,7 +315,7 @@ var index = postcss.plugin('postcss-modules', function () {
   };
 });
 
-exports.defaultParser = getEsImports.defaultParser;
-exports.defaultParserOptions = getEsImports.defaultParserOptions;
+exports.defaultParser = _getEsImports.defaultParser;
+exports.defaultParserOptions = _getEsImports.defaultParserOptions;
 exports.UNUSED_EXPORT = UNUSED_EXPORT;
-exports['default'] = index;
+exports.default = index;
