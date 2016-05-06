@@ -1,5 +1,5 @@
 import test from 'ava';
-import { size, forEach, flow, map, startsWith, endsWith } from 'lodash/fp';
+import { forEach, flow, map } from 'lodash/fp';
 import { join } from 'path';
 import { parse } from 'espree';
 import { readFileSync } from 'fs';
@@ -34,7 +34,8 @@ test.serial('local imports from single entry', t => {
     modulesEs({
       jsFiles: join(localImports, 'App.js'),
       moduleExportDirectory,
-      getJsExports() {
+      getJsExports(filename, jsFile) {
+        styleExportsIsValid(jsFile);
         t.pass();
       },
     }),
@@ -72,7 +73,8 @@ test.serial('local imports from files', t => {
       ],
       recurse: false,
       moduleExportDirectory,
-      getJsExports() {
+      getJsExports(filename, jsFile) {
+        styleExportsIsValid(jsFile);
         t.pass();
       },
     }),
@@ -104,7 +106,8 @@ test.serial('unused export', t => {
     modulesEs({
       jsFiles: join(unusedExport, 'App.js'),
       moduleExportDirectory,
-      getJsExports() {
+      getJsExports(filename, jsFile) {
+        styleExportsIsValid(jsFile);
         t.pass();
       },
     }),
@@ -154,7 +157,8 @@ test.serial('default import', t => {
     modulesEs({
       jsFiles: join(defaultImport, 'App.js'),
       moduleExportDirectory,
-      getJsExports() {
+      getJsExports(filename, jsFile) {
+        styleExportsIsValid(jsFile);
         t.pass();
       },
       generateScopedName(name) {
@@ -162,6 +166,28 @@ test.serial('default import', t => {
         t.true(['default', 'primary'].indexOf(name) !== -1);
         return name;
       },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
+      t.is(messages.length, 0);
+    });
+});
+
+test.serial('namespace import', t => {
+  t.plan(2);
+
+  const moduleExportDirectory = join(namespaceImport, 'styles');
+  const button = join(moduleExportDirectory, 'button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(namespaceImport, 'App.js'),
+      moduleExportDirectory,
+      getJsExports() {},
     }),
   ]);
 
