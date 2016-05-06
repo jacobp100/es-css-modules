@@ -57,7 +57,7 @@ export default (Core, { removeUnusedClasses, generateScopedName, file }) => (sty
       return UNUSED_EXPORT;
     }
 
-    const value = generateScopedName(name, filename, type);
+    const value = generateScopedName(name, filename, css);
 
     mutateSet(scopedNames, [exportFile, name], value);
     mutateSet(typesPerName, [name], type);

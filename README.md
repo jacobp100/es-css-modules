@@ -68,3 +68,9 @@ modulesEs({
   parserOptions,
 })
 ```
+
+# Notes
+
+Unlike regular CSS Modules, we only export class names.
+
+At present, a class and keyframes definition cannot have the same name until [this is fixed](https://github.com/css-modules/postcss-modules-scope/issues/82)

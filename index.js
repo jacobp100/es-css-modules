@@ -13,6 +13,7 @@ var stringHash = _interopDefault(require('string-hash'));
 var getEsImports = require('get-es-imports');
 var getEsImports__default = _interopDefault(getEsImports);
 var fs = require('fs');
+var lodash = require('lodash');
 var isJsKeyword = _interopDefault(require('is-keyword-js'));
 
 var babelHelpers = {};
@@ -163,10 +164,13 @@ const hasNamespaceImport = lodash_fp.includes('*');
 var patchGetScopedName = ((Core, _ref) => {
   let removeUnusedClasses = _ref.removeUnusedClasses;
   let generateScopedName = _ref.generateScopedName;
+  let file = _ref.file;
   return styleImports => {
-    let scopedNames = {};
+    // We mutate these objects, and return an object that will later be mutated
+    const scopedNames = {};
+    const typesPerName = {};
 
-    Core.scope.generateScopedName = (name, filename) => {
+    Core.scope.generateScopedName = (name, filename, css) => {
       // eslint-disable-line
       if (!isValidClassname(name)) {
         // Throws within promise, goes to .catch(...)
@@ -176,22 +180,33 @@ var patchGetScopedName = ((Core, _ref) => {
       const exportFile = `${ filename }.js`;
       const styleImport = styleImports[exportFile];
 
+      const isClass = css.indexOf(`.${ name }`) !== -1;
+      const animationRe = new RegExp(`@(?:[\\w]+-)?keyframes[\\s\\t\\n]*${ name }`);
+      const isAnimation = css.search(animationRe) !== -1;
+
+      if (isClass && isAnimation) {
+        throw new Error(`You defined ${ name } as both a class and an animation. ` + 'See https://github.com/css-modules/postcss-modules-scope/issues/8');
+      }
+
+      const type = isClass ? 'class' : 'animation';
+
       const currentValue = lodash_fp.get([exportFile, name], scopedNames);
 
       if (currentValue) return currentValue;
 
-      if (removeUnusedClasses && !lodash_fp.includes(name, styleImport) && !hasNamespaceImport(styleImport)) {
+      if (removeUnusedClasses && file === filename && !isAnimation && !lodash_fp.includes(name, styleImport) && !hasNamespaceImport(styleImport)) {
         return UNUSED_EXPORT;
       }
 
-      const value = generateScopedName(name, filename);
+      const value = generateScopedName(name, filename, css);
 
-      scopedNames = lodash_fp.set([exportFile, name], value, scopedNames);
+      lodash.set(scopedNames, [exportFile, name], value);
+      lodash.set(typesPerName, [name], type);
 
       return value;
     };
 
-    return styleImports;
+    return { styleImports: styleImports, typesPerName: typesPerName };
   };
 })
 
@@ -249,10 +264,7 @@ var index = postcss.plugin('postcss-modules', function () {
         recurse: recurse,
         parser: parser,
         parserOptions: parserOptions
-      }).then(patchGetScopedName(Core, {
-        removeUnusedClasses: removeUnusedClasses,
-        generateScopedName: generateScopedName
-      }));
+      });
     }
 
     return styleImportsPromise;
@@ -267,53 +279,62 @@ var index = postcss.plugin('postcss-modules', function () {
 
     const cssParser = new Parser(loader.fetch.bind(loader));
 
-    return lazyGetDependencies().then(styleImports => new Promise((res, rej) => {
-      const file = css.source.input.file;
-      const jsExports = styleImports[`${ file }.js`];
+    const file = css.source.input.file;
 
-      postcss([].concat(babelHelpers.toConsumableArray(plugins), [cssParser.plugin, removeClasses([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
-        lodash_fp.forEach(source => {
-          css.prepend(source);
-        }, loader.sources);
+    return lazyGetDependencies().then(patchGetScopedName(Core, {
+      removeUnusedClasses: removeUnusedClasses,
+      generateScopedName: generateScopedName,
+      file: file
+    })).then(_ref2 => {
+      let styleImports = _ref2.styleImports;
+      let typesPerName = _ref2.typesPerName;
+      return new Promise((res, rej) => {
+        const jsExports = styleImports[`${ file }.js`];
 
-        const exportTokens = cssParser.exportTokens;
+        postcss([].concat(babelHelpers.toConsumableArray(plugins), [cssParser.plugin, removeClasses([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
+          lodash_fp.forEach(source => {
+            css.prepend(source);
+          }, loader.sources);
+        }).then(() => {
+          const exportTokens = cssParser.exportTokens;
 
 
-        if (!jsExports && !lodash_fp.isEmpty(exportTokens)) {
-          result.warn('Defined local styles, was never imported');
-        }
+          if (!jsExports && !lodash_fp.isEmpty(exportTokens)) {
+            result.warn('Defined local styles, but the css file was never imported');
+          }
 
-        const jsExportsWithoutNs = lodash_fp.without(jsExports, '*');
+          const jsExportsWithoutNs = lodash_fp.without(jsExports, '*');
 
-        if (lodash_fp.isEmpty(jsExportsWithoutNs)) {
-          res();
-          return;
-        }
+          if (lodash_fp.isEmpty(jsExportsWithoutNs)) {
+            return;
+          }
 
-        const cssExports = lodash_fp.keys(exportTokens);
-        const invalidImports = lodash_fp.difference(jsExportsWithoutNs, cssExports);
+          const cssExports = lodash_fp.flow(lodash_fp.keys, lodash_fp.filter(name => typesPerName[name] !== 'animation'))(exportTokens);
+          const invalidImports = lodash_fp.difference(jsExportsWithoutNs, cssExports);
 
-        if (!lodash_fp.isEmpty(invalidImports)) {
-          // TODO: We could be more helpful by saying what file tried to import it, but we don't
-          // have that information currently.
-          throw new Error(`Cannot import style(s) ${ invalidImports.join(', ') } from ${ file }`);
-        }
+          if (!lodash_fp.isEmpty(invalidImports)) {
+            // TODO: We could be more helpful by saying what file tried to import it, but we don't
+            // have that information currently.
+            throw new Error(`Cannot import style(s) ${ invalidImports.join(', ') } from ${ file }`);
+          }
 
-        if (warnOnUnusedClasses) {
-          const unusedImports = lodash_fp.difference(cssExports, jsExportsWithoutNs);
+          if (warnOnUnusedClasses) {
+            const unusedImports = lodash_fp.difference(cssExports, jsExportsWithoutNs);
 
-          lodash_fp.forEach(unusedImport => {
-            result.warn(`Defined unused style "${ unusedImport }"`);
-          }, unusedImports);
-        }
+            lodash_fp.forEach(unusedImport => {
+              result.warn(`Defined unused style "${ unusedImport }"`);
+            }, unusedImports);
+          }
+        }).then(() => {
+          const exportTokens = cssParser.exportTokens;
 
-        const styleExports = getStyleExports(exportTokens);
 
-        getJsExports(css.source.input.file, styleExports, exportTokens);
+          const styleExports = getStyleExports(exportTokens);
 
-        res();
-      }, rej);
-    }));
+          getJsExports(css.source.input.file, styleExports, exportTokens);
+        }).then(() => res()).catch(e => rej(e));
+      });
+    });
   };
 });
 
