@@ -2,7 +2,11 @@
 
 ![PostCSS Modules ES](https://raw.githubusercontent.com/jacobp100/postcss-modules-es/master/assets/logo.png)
 
-# PostCSS Modules ES
+```
+npm install --save-dev postcss-modules-es
+```
+
+### [Skip to Usage Docs](#user-content-api)
 
 # What and Why?
 

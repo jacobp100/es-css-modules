@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "jsnext:main": "src/index.js",
   "scripts": {
     "test": "ava --verbose --timeout 2s",
     "build": "rollup -c rollup.config.js && babel index.js -o index.js"
@@ -12,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "css-modules-loader-core": "^1.0.0",
-    "get-es-imports": "0.0.2",
+    "get-es-imports": "^1.0.0",
     "is-keyword-js": "^1.0.3",
     "lodash": "^4.11.2",
     "postcss": "^5.0.21",
@@ -46,5 +47,9 @@
       "babel-register"
     ],
     "babel": "inherit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jacobp100/postcss-modules-es"
   }
 }
