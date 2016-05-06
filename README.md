@@ -6,6 +6,8 @@ npm install --save-dev postcss-modules-es
 
 ### [Skip to Usage Docs](#user-content-api)
 
+### [Demo Using Gulp](https://github.com/jacobp100/postcss-modules-es-demo)
+
 # What and Why?
 
 I’ll assume you are already sold on CSS Modules. If you haven’t used CSS Modules, you should definitely try it!
