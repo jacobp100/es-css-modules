@@ -16,6 +16,8 @@ const namespaceImportInvalidExportKeyword =
 const namespaceImportInvalidExportHyphen =
   join(baseDir, 'namespace-import-invalid-export-hyphen');
 const composesImport = join(baseDir, 'composes-import');
+const animations = join(baseDir, 'animations');
+const animationsDuplicateNames = join(baseDir, 'animations-duplicate-names');
 
 const parseWithDefaultOptions = contents => parse(contents, defaultParserOptions);
 const styleExportsIsValid = flow(
@@ -34,7 +36,7 @@ test.serial('local imports from single entry', t => {
     modulesEs({
       jsFiles: join(localImports, 'App.js'),
       moduleExportDirectory,
-      getJsExports(filename, jsFile) {
+      getJsExports(name, jsFile) {
         styleExportsIsValid(jsFile);
         t.pass();
       },
@@ -44,13 +46,13 @@ test.serial('local imports from single entry', t => {
   return Promise.all([
     processor
       .process(readFileSync(button, 'utf-8'), { from: button })
-      .then(({ messages, css }) => {
+      .then(({ css, messages }) => {
         t.is(css.indexOf(UNUSED_EXPORT), -1);
         t.is(messages.length, 0);
       }),
     processor
       .process(readFileSync(typography, 'utf-8'), { from: typography })
-      .then(({ messages, css }) => {
+      .then(({ css, messages }) => {
         t.is(css.indexOf(UNUSED_EXPORT), -1);
         t.is(messages.length, 0);
       }),
@@ -73,7 +75,7 @@ test.serial('local imports from files', t => {
       ],
       recurse: false,
       moduleExportDirectory,
-      getJsExports(filename, jsFile) {
+      getJsExports(name, jsFile) {
         styleExportsIsValid(jsFile);
         t.pass();
       },
@@ -106,7 +108,7 @@ test.serial('unused export', t => {
     modulesEs({
       jsFiles: join(unusedExport, 'App.js'),
       moduleExportDirectory,
-      getJsExports(filename, jsFile) {
+      getJsExports(name, jsFile) {
         styleExportsIsValid(jsFile);
         t.pass();
       },
@@ -157,7 +159,7 @@ test.serial('default import', t => {
     modulesEs({
       jsFiles: join(defaultImport, 'App.js'),
       moduleExportDirectory,
-      getJsExports(filename, jsFile) {
+      getJsExports(name, jsFile) {
         styleExportsIsValid(jsFile);
         t.pass();
       },
@@ -178,7 +180,7 @@ test.serial('default import', t => {
 });
 
 test.serial('namespace import', t => {
-  t.plan(2);
+  t.plan(3);
 
   const moduleExportDirectory = join(namespaceImport, 'styles');
   const button = join(moduleExportDirectory, 'button.css');
@@ -187,7 +189,10 @@ test.serial('namespace import', t => {
     modulesEs({
       jsFiles: join(namespaceImport, 'App.js'),
       moduleExportDirectory,
-      getJsExports() {},
+      getJsExports(name, jsFile) {
+        styleExportsIsValid(jsFile);
+        t.pass();
+      },
     }),
   ]);
 
@@ -242,7 +247,7 @@ test.serial('namespace import invalid export hyphen', t => {
 });
 
 test.serial('composes import', t => {
-  t.plan(1);
+  t.plan(3);
 
   const moduleExportDirectory = join(composesImport, 'styles');
   const button = join(moduleExportDirectory, 'button.css');
@@ -251,13 +256,67 @@ test.serial('composes import', t => {
     modulesEs({
       jsFiles: join(composesImport, 'App.js'),
       moduleExportDirectory,
+      getJsExports(name, jsFile) {
+        styleExportsIsValid(jsFile);
+        t.pass();
+      },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
+      t.is(messages.length, 0);
+    });
+});
+
+test.serial('animations', t => {
+  t.plan(4);
+
+  const moduleExportDirectory = join(animations, 'styles');
+  const button = join(moduleExportDirectory, 'button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(animations, 'App.js'),
+      moduleExportDirectory,
+      getJsExports(name, jsFile) {
+        styleExportsIsValid(jsFile);
+        t.pass();
+      },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
+      t.not(css.indexOf('fadeIn'), -1);
+      t.is(messages.length, 0);
+    });
+});
+
+test.serial('animations duplicate names', t => {
+  t.plan(1);
+
+  const moduleExportDirectory = join(animationsDuplicateNames, 'styles');
+  const button = join(moduleExportDirectory, 'button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(animationsDuplicateNames, 'App.js'),
+      moduleExportDirectory,
       getJsExports() {},
     }),
   ]);
 
   return processor
     .process(readFileSync(button, 'utf-8'), { from: button })
-    .then(({ css }) => {
-      t.is(css.indexOf(UNUSED_EXPORT), -1);
+    .catch((e) => {
+      t.is(e.message,
+        'You defined default as both a class and an animation. ' +
+        'See https://github.com/css-modules/postcss-modules-scope/issues/8'
+      );
     });
 });

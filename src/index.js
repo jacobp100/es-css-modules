@@ -1,5 +1,5 @@
 import {
-  reject, flow, forEach, partial, map, castArray, keys, difference, isEmpty, without,
+  reject, flow, forEach, partial, map, castArray, keys, difference, isEmpty, without, filter,
 } from 'lodash/fp';
 import { resolve } from 'path';
 import postcss from 'postcss';
@@ -79,7 +79,7 @@ export default postcss.plugin('postcss-modules', ({
         generateScopedName,
         file,
       }))
-      .then((styleImports) => new Promise((res, rej) => {
+      .then(({ styleImports, typesPerName }) => new Promise((res, rej) => {
         const jsExports = styleImports[`${file}.js`];
 
         postcss([...plugins, cssParser.plugin, removeClasses([UNUSED_EXPORT])])
@@ -88,21 +88,24 @@ export default postcss.plugin('postcss-modules', ({
             forEach((source) => {
               css.prepend(source);
             }, loader.sources);
-
+          })
+          .then(() => {
             const { exportTokens } = cssParser;
 
             if (!jsExports && !isEmpty(exportTokens)) {
-              result.warn('Defined local styles, was never imported');
+              result.warn('Defined local styles, but the css file was never imported');
             }
 
             const jsExportsWithoutNs = without(jsExports, '*');
 
             if (isEmpty(jsExportsWithoutNs)) {
-              res();
               return;
             }
 
-            const cssExports = keys(exportTokens);
+            const cssExports = flow(
+              keys,
+              filter(name => typesPerName[name] !== 'animation')
+            )(exportTokens);
             const invalidImports = difference(jsExportsWithoutNs, cssExports);
 
             if (!isEmpty(invalidImports)) {
@@ -118,13 +121,16 @@ export default postcss.plugin('postcss-modules', ({
                 result.warn(`Defined unused style "${unusedImport}"`);
               }, unusedImports);
             }
+          })
+          .then(() => {
+            const { exportTokens } = cssParser;
 
             const styleExports = getStyleExports(exportTokens);
 
             getJsExports(css.source.input.file, styleExports, exportTokens);
-
-            res();
-          }, rej);
+          })
+          .then(() => res())
+          .catch((e) => rej(e));
       }));
   };
 });
