@@ -17,7 +17,7 @@ const isValidClassname = overEvery([
 const hasNamespaceImport = includes('*');
 
 
-export default (Core, { removeUnusedClasses, generateScopedName }) => (styleImports) => {
+export default (Core, { removeUnusedClasses, generateScopedName, file }) => (styleImports) => {
   let scopedNames = {};
 
   Core.scope.generateScopedName = (name, filename) => { // eslint-disable-line
@@ -34,6 +34,7 @@ export default (Core, { removeUnusedClasses, generateScopedName }) => (styleImpo
     if (currentValue) return currentValue;
 
     if (removeUnusedClasses &&
+      file === filename &&
       !includes(name, styleImport) &&
       !hasNamespaceImport(styleImport)) {
       return UNUSED_EXPORT;

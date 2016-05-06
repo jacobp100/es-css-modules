@@ -47,10 +47,7 @@ export default postcss.plugin('postcss-modules', ({
         recurse,
         parser,
         parserOptions,
-      }).then(patchGetScopedName(Core, {
-        removeUnusedClasses,
-        generateScopedName,
-      }));
+      });
     }
 
     return styleImportsPromise;
@@ -74,9 +71,15 @@ export default postcss.plugin('postcss-modules', ({
 
     const cssParser = new Parser(loader.fetch.bind(loader));
 
+    const file = css.source.input.file;
+
     return lazyGetDependencies()
+      .then(patchGetScopedName(Core, {
+        removeUnusedClasses,
+        generateScopedName,
+        file,
+      }))
       .then((styleImports) => new Promise((res, rej) => {
-        const file = css.source.input.file;
         const jsExports = styleImports[`${file}.js`];
 
         postcss([...plugins, cssParser.plugin, removeClasses([UNUSED_EXPORT])])

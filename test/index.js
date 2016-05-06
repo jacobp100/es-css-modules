@@ -4,7 +4,7 @@ import { join } from 'path';
 import { parse } from 'espree';
 import { readFileSync } from 'fs';
 import postcss from 'postcss';
-const { default: modulesEs, defaultParserOptions, UNUSED_EXPORT } = require('..'); // Babel...
+import modulesEs, { defaultParserOptions, UNUSED_EXPORT } from '../src';
 
 const baseDir = join(__dirname, 'cases');
 const localImports = join(baseDir, 'local-imports');
@@ -44,20 +44,20 @@ test.serial('local imports from single entry', t => {
     processor
       .process(readFileSync(button, 'utf-8'), { from: button })
       .then(({ messages, css }) => {
-        t.is(messages.length, 0);
         t.is(css.indexOf(UNUSED_EXPORT), -1);
+        t.is(messages.length, 0);
       }),
     processor
       .process(readFileSync(typography, 'utf-8'), { from: typography })
       .then(({ messages, css }) => {
-        t.is(messages.length, 0);
         t.is(css.indexOf(UNUSED_EXPORT), -1);
+        t.is(messages.length, 0);
       }),
   ]);
 });
 
 test.serial('local imports from files', t => {
-  t.plan(4);
+  t.plan(6);
 
   const moduleExportDirectory = join(localImports, 'styles');
   const button = join(moduleExportDirectory, 'button.css');
@@ -81,19 +81,21 @@ test.serial('local imports from files', t => {
   return Promise.all([
     processor
       .process(readFileSync(button, 'utf-8'), { from: button })
-      .then(({ messages }) => {
+      .then(({ css, messages }) => {
+        t.is(css.indexOf(UNUSED_EXPORT), -1);
         t.is(messages.length, 0);
       }),
     processor
       .process(readFileSync(typography, 'utf-8'), { from: typography })
-      .then(({ messages }) => {
+      .then(({ css, messages }) => {
+        t.is(css.indexOf(UNUSED_EXPORT), -1);
         t.is(messages.length, 0);
       }),
   ]);
 });
 
 test.serial('unused export', t => {
-  t.plan(4);
+  t.plan(5);
 
   const moduleExportDirectory = join(unusedExport, 'styles');
   const button = join(moduleExportDirectory, 'button.css');
@@ -110,7 +112,8 @@ test.serial('unused export', t => {
 
   return processor
     .process(readFileSync(button, 'utf-8'), { from: button })
-    .then(({ messages }) => {
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
       t.is(messages.length, 1);
       t.is(messages[0].type, 'warning');
       t.is(messages[0].text, 'Defined unused style "primary"');
@@ -142,7 +145,7 @@ test.serial('unused export without minification', t => {
 });
 
 test.serial('default import', t => {
-  t.plan(4);
+  t.plan(5);
 
   const moduleExportDirectory = join(defaultImport, 'styles');
   const button = join(moduleExportDirectory, 'button.css');
@@ -164,7 +167,8 @@ test.serial('default import', t => {
 
   return processor
     .process(readFileSync(button, 'utf-8'), { from: button })
-    .then(({ messages }) => {
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
       t.is(messages.length, 0);
     });
 });
@@ -231,21 +235,3 @@ test.serial('composes import', t => {
       t.is(css.indexOf(UNUSED_EXPORT), -1);
     });
 });
-
-// test.serial('composes import from entry', t => {
-//   t.plan(5);
-//
-//   const cssInputDirectory = join(composesImport, 'styles');
-//
-//   return modulesEs({
-//     writeOutput: false,
-//     jsEntry: join(composesImport, 'App.js'),
-//     cssInputDirectory,
-//   }).then(({ stats, styleExports, styleMap, cssOutputFiles }) => {
-//     t.is(stats.length, 0);
-//     t.pass(styleExportsIsValid(styleExports));
-//     t.is(styleExports.length, 1, 'Did not export all styles');
-//     t.is(size(styleMap[join(cssInputDirectory, 'button.css.js')]), 2);
-//     t.is(cssOutputFiles.length, 1, 'Did not export all styles');
-//   });
-// });
