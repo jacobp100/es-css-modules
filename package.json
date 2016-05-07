@@ -1,14 +1,23 @@
 {
   "name": "postcss-modules-es",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "PostCSS plugin that combines CSS Modules and ES Imports",
   "main": "index.js",
   "jsnext:main": "src/index.js",
   "scripts": {
     "test": "ava --verbose --timeout 2s",
     "build": "rollup -c rollup.config.js && babel index.js -o index.js"
   },
-  "keywords": [],
+  "keywords": [
+    "postcss",
+    "modules",
+    "css-modules",
+    "css",
+    "minify",
+    "min",
+    "class",
+    "className"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
