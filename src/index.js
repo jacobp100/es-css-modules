@@ -12,7 +12,7 @@ import getStyleImports from './getStyleImports';
 import patchGetScopedName, { UNUSED_EXPORT } from './patchGetScopedName';
 import getStyleExports from './getStyleExports';
 import saveJsExports from './saveJsExports';
-import { defaultParser, defaultParserOptions } from 'get-es-imports';
+import { defaultParser, defaultParserOptions } from 'get-es-imports-exports';
 
 
 export { defaultParser, defaultParserOptions, UNUSED_EXPORT };

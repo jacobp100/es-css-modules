@@ -35,9 +35,9 @@ var _stringHash = require('string-hash');
 
 var _stringHash2 = _interopRequireDefault(_stringHash);
 
-var _getEsImports = require('get-es-imports');
+var _getEsImportsExports = require('get-es-imports-exports');
 
-var _getEsImports2 = _interopRequireDefault(_getEsImports);
+var _getEsImportsExports2 = _interopRequireDefault(_getEsImportsExports);
 
 var _fs = require('fs');
 
@@ -104,7 +104,7 @@ var getStyleImports = (() => {
       });
     };
 
-    var _ref2 = yield (0, _getEsImports2.default)({
+    var _ref2 = yield (0, _getEsImportsExports2.default)({
       files: files,
       recurse: recurse,
       parser: parser,
@@ -226,9 +226,9 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
   var _ref8$recurse = _ref8.recurse;
   let recurse = _ref8$recurse === undefined ? true : _ref8$recurse;
   var _ref8$parser = _ref8.parser;
-  let parser = _ref8$parser === undefined ? _getEsImports.defaultParser : _ref8$parser;
+  let parser = _ref8$parser === undefined ? _getEsImportsExports.defaultParser : _ref8$parser;
   var _ref8$parserOptions = _ref8.parserOptions;
-  let parserOptions = _ref8$parserOptions === undefined ? _getEsImports.defaultParserOptions : _ref8$parserOptions;
+  let parserOptions = _ref8$parserOptions === undefined ? _getEsImportsExports.defaultParserOptions : _ref8$parserOptions;
   let Loader = _ref8.Loader;
 
   let styleImportsPromise;
@@ -315,7 +315,7 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
   };
 });
 
-exports.defaultParser = _getEsImports.defaultParser;
-exports.defaultParserOptions = _getEsImports.defaultParserOptions;
+exports.defaultParser = _getEsImportsExports.defaultParser;
+exports.defaultParserOptions = _getEsImportsExports.defaultParserOptions;
 exports.UNUSED_EXPORT = UNUSED_EXPORT;
 exports.default = index;

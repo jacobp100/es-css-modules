@@ -1,7 +1,7 @@
 import {
   flow, startsWith, endsWith, partial, negate, filter, first, toPairs, fromPairs,
 } from 'lodash/fp';
-import getEsImports from 'get-es-imports';
+import getEsImports from 'get-es-imports-exports';
 import { join, isAbsolute, relative } from 'path';
 import { stat } from 'fs';
 
