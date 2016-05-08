@@ -116,10 +116,10 @@ var getStyleImports = (() => {
       }
     });
 
-    const dependencies = _ref2.dependencies;
+    const imports = _ref2.imports;
 
 
-    const styleImports = (0, _fp.flow)(_fp.toPairs, (0, _fp.filter)((0, _fp.flow)(_fp.first, isInModuleExportsDirectory)), _fp.fromPairs)(dependencies);
+    const styleImports = (0, _fp.flow)(_fp.toPairs, (0, _fp.filter)((0, _fp.flow)(_fp.first, isInModuleExportsDirectory)), _fp.fromPairs)(imports);
 
     return styleImports;
   });

@@ -1,7 +1,7 @@
 import {
   flow, startsWith, endsWith, partial, negate, filter, first, toPairs, fromPairs,
 } from 'lodash/fp';
-import getEsImports from 'get-es-imports-exports';
+import getEsImportsExports from 'get-es-imports-exports';
 import { join, isAbsolute, relative } from 'path';
 import { stat } from 'fs';
 
@@ -35,7 +35,7 @@ export default async ({
     });
   };
 
-  const { dependencies } = await getEsImports({
+  const { imports } = await getEsImportsExports({
     files,
     recurse,
     parser,
@@ -54,7 +54,7 @@ export default async ({
       isInModuleExportsDirectory
     )),
     fromPairs
-  )(dependencies);
+  )(imports);
 
   return styleImports;
 };
