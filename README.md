@@ -1,12 +1,12 @@
-![PostCSS Modules ES](https://raw.githubusercontent.com/jacobp100/postcss-modules-es/master/assets/logo.png)
+![ES CSS Modules](https://raw.githubusercontent.com/jacobp100/es-css-modules/master/assets/logo-full.png)
 
 ```
-npm install --save-dev postcss-modules-es
+npm install --save-dev es-css-modules
 ```
 
 ### [Skip to Usage Docs](#user-content-api)
 
-### [Demo Using Gulp](https://github.com/jacobp100/postcss-modules-es-demo)
+### [Demo Using Gulp](https://github.com/jacobp100/es-css-modules-demo)
 
 # What and Why?
 
@@ -14,21 +14,21 @@ I’ll assume you are already sold on CSS Modules. If you haven’t used CSS Mod
 
 For most people, they’re using CSS Modules with webpack, so what actually happens is abstracted for them. CSS Modules at its core takes a bunch of CSS files and mangles each class name in every file to make every file have its own unique namespace. This is why class names do not conflict. It also exports a JSON file with the mapping of the original class name to the mangled class name. Simply put,
 
-![CSS Modules demo](https://raw.githubusercontent.com/jacobp100/postcss-modules-es/master/assets/css-modules.png)
+![CSS Modules demo](https://raw.githubusercontent.com/jacobp100/es-css-modules/master/assets/css-modules.png)
 
 ES6 brought in import/export syntax, which now means that it is possible to statically determine which classes are actually used. ES CSS Modules takes advantage of this to produce CSS files without unused styles.
 
-![ES CSS Modules demo](https://raw.githubusercontent.com/jacobp100/postcss-modules-es/master/assets/es-css-modules.png)
+![ES CSS Modules demo](https://raw.githubusercontent.com/jacobp100/es-css-modules/master/assets/es-css-modules.png)
 
 An additional advantage of this is that physical JavaScript files are created. This means that you are not tied to a specific module bundler for your JS files: using ES CSS Modules means you can now use Rollup.
 
 # API
 
 ```js
-import modulesEs from 'postcss-modules-es';
+import esCssModules from 'es-css-modules';
 
 postcss([
-  modulesEs({
+  esCssModules({
     jsFiles: 'src/App.js',
     moduleExportDirectory: 'styles',
   }),
@@ -60,7 +60,7 @@ We use the parser used for ESLint and a default configuration that works for Rea
 The complete options are as follows,
 
 ```js
-modulesEs({
+esCssModules({
   moduleExportDirectory,
   jsFiles,
   getJsExports,

@@ -1,6 +1,6 @@
 {
-  "name": "postcss-modules-es",
-  "version": "1.0.5",
+  "name": "es-css-modules",
+  "version": "1.0.0",
   "description": "PostCSS plugin that combines CSS Modules and ES Imports",
   "main": "index.js",
   "jsnext:main": "src/index.js",
