@@ -145,19 +145,21 @@ var patchGetScopedName = (Core, _ref3) => {
 
     Core.scope.generateScopedName = (name, filename, css) => {
       // eslint-disable-line
-      if (!isValidClassname(name)) {
-        // Throws within promise, goes to .catch(...)
-        throw new Error(`Class name ${ name } is invalid`);
-      }
-
       const styleImport = styleImports[filename];
 
-      const isClass = css.indexOf(`.${ name }`) !== -1;
-      const animationRe = new RegExp(`@(?:[\\w]+-)?keyframes[\\s\\t\\n]*${ name }`);
+      const notValidIdent = '(?:[^\\w\\d-_]|$)';
+      const classRe = new RegExp(`\\.${ name }${ notValidIdent }`);
+      const isClass = css.search(classRe) !== -1;
+      const animationRe = new RegExp(`@(?:[\\w]+-)?keyframes[\\s\\t\\n]*${ name }${ notValidIdent }`);
       const isAnimation = css.search(animationRe) !== -1;
 
       if (isClass && isAnimation) {
         throw new Error(`You defined ${ name } as both a class and an animation. ` + 'See https://github.com/css-modules/postcss-modules-scope/issues/8');
+      }
+
+      if (isClass && !isValidClassname(name)) {
+        // Throws within promise, goes to .catch(...)
+        throw new Error(`Class name ${ name } is invalid`);
       }
 
       const type = isClass ? 'class' : 'animation';

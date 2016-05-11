@@ -1,0 +1,15 @@
+.default {
+  border: none;
+  background: #CCD1D9;
+  margin: 0;
+  padding: 0.5em 1em;
+  border: 0;
+  transition: background 0.1s;
+  animation: fade-in 1s;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+}

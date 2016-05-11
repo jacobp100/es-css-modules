@@ -17,7 +17,9 @@ const namespaceImportInvalidExportHyphen =
   join(baseDir, 'namespace-import-invalid-export-hyphen');
 const composesImport = join(baseDir, 'composes-import');
 const animations = join(baseDir, 'animations');
+const animationsInvalidJsIdent = join(baseDir, 'animations-invalid-js-ident');
 const animationsDuplicateNames = join(baseDir, 'animations-duplicate-names');
+const animationsSimilarNames = join(baseDir, 'animations-similar-names');
 const multipleStyleDirectories = join(baseDir, 'multiple-style-directories');
 const noCss = join(baseDir, 'no-css');
 const noCssWithBinding = join(baseDir, 'no-css-with-binding');
@@ -281,6 +283,30 @@ test.serial('animations', t => {
     });
 });
 
+test.serial('animations are allowed to be called names that are not valid js identifiers', t => {
+  t.plan(4);
+
+  const button = join(animationsInvalidJsIdent, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(animationsInvalidJsIdent, 'App.js'),
+      getJsExports(name, jsFile) {
+        styleExportsIsValid(jsFile);
+        t.pass();
+      },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
+      t.not(css.indexOf('fade-in'), -1);
+      t.is(messages.length, 0);
+    });
+});
+
 test.serial('animations duplicate names', t => {
   t.plan(1);
 
@@ -300,6 +326,30 @@ test.serial('animations duplicate names', t => {
         'You defined default as both a class and an animation. ' +
         'See https://github.com/css-modules/postcss-modules-scope/issues/8'
       );
+    });
+});
+
+test.serial('animations similar names, but not duplicate', t => {
+  t.plan(4);
+
+  const button = join(animationsSimilarNames, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(animationsSimilarNames, 'App.js'),
+      getJsExports(name, jsFile) {
+        styleExportsIsValid(jsFile);
+        t.pass();
+      },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
+      t.not(css.indexOf('fade-in'), -1);
+      t.is(messages.length, 0);
     });
 });
 
