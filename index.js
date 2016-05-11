@@ -288,7 +288,7 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
           const jsExportsWithoutNs = (0, _fp.without)(jsExports, '*');
 
           if ((0, _fp.isEmpty)(jsExportsWithoutNs)) {
-            return;
+            return { cssExports: {} };
           }
 
           const cssExports = (0, _fp.flow)(_fp.keys, (0, _fp.filter)(name => typesPerName[name] !== 'animation'))(exportTokens);
@@ -307,13 +307,16 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
               result.warn(`Defined unused style "${ unusedImport }"`);
             }, unusedImports);
           }
-        }).then(() => {
-          const exportTokens = cssParser.exportTokens;
 
+          const tokensToExport = (0, _fp.pick)(cssExports, exportTokens);
 
-          const styleExports = getStyleExports(exportTokens);
+          return { tokensToExport: tokensToExport };
+        }).then(_ref10 => {
+          let tokensToExport = _ref10.tokensToExport;
 
-          getJsExports(css.source.input.file, styleExports, exportTokens);
+          const styleExports = getStyleExports(tokensToExport);
+
+          getJsExports(css.source.input.file, styleExports, tokensToExport);
         }).then(() => res()).catch(e => rej(e));
       });
     });

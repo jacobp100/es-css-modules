@@ -5,7 +5,7 @@
   "main": "index.js",
   "jsnext:main": "src/index.js",
   "scripts": {
-    "test": "ava --verbose --timeout 2s",
+    "test": "ava --verbose --timeout 5s",
     "build": "rollup -c rollup.config.js && babel index.js -o index.js"
   },
   "keywords": [

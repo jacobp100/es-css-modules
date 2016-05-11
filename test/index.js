@@ -1,5 +1,5 @@
 import test from 'ava';
-import { forEach, flow, map, startsWith, update, union } from 'lodash/fp';
+import { startsWith, update, union } from 'lodash/fp';
 import { join } from 'path';
 import { parse } from 'espree';
 import { readFileSync } from 'fs';
@@ -26,10 +26,6 @@ const noCssWithBinding = join(baseDir, 'no-css-with-binding');
 const jsxFile = join(baseDir, 'jsx-file');
 
 const parseWithDefaultOptions = contents => parse(contents, defaultParserOptions);
-const styleExportsIsValid = flow(
-  map('contents'),
-  forEach(parseWithDefaultOptions)
-);
 
 test.serial('local imports from single entry', t => {
   t.plan(6);
@@ -41,7 +37,7 @@ test.serial('local imports from single entry', t => {
     modulesEs({
       jsFiles: join(localImports, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -78,7 +74,7 @@ test.serial('local imports from files', t => {
       ],
       recurse: false,
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -109,7 +105,7 @@ test.serial('unused export', t => {
     modulesEs({
       jsFiles: join(unusedExport, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -156,7 +152,7 @@ test.serial('default import', t => {
     modulesEs({
       jsFiles: join(defaultImport, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
       generateScopedName(name) {
@@ -184,7 +180,7 @@ test.serial('namespace import', t => {
     modulesEs({
       jsFiles: join(namespaceImport, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -245,7 +241,7 @@ test.serial('composes import', t => {
     modulesEs({
       jsFiles: join(composesImport, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -268,7 +264,7 @@ test.serial('animations', t => {
     modulesEs({
       jsFiles: join(animations, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -292,7 +288,7 @@ test.serial('animations are allowed to be called names that are not valid js ide
     modulesEs({
       jsFiles: join(animationsInvalidJsIdent, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -302,7 +298,7 @@ test.serial('animations are allowed to be called names that are not valid js ide
     .process(readFileSync(button, 'utf-8'), { from: button })
     .then(({ css, messages }) => {
       t.is(css.indexOf(UNUSED_EXPORT), -1);
-      t.not(css.indexOf('fade-in'), -1);
+      t.not(css.indexOf('-test'), -1);
       t.is(messages.length, 0);
     });
 });
@@ -338,7 +334,7 @@ test.serial('animations similar names, but not duplicate', t => {
     modulesEs({
       jsFiles: join(animationsSimilarNames, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),
@@ -363,7 +359,7 @@ test.serial('works with multiple style files', t => {
     modulesEs({
       jsFiles: join(multipleStyleDirectories, 'App.js'),
       getJsExports(name, jsFile) {
-        styleExportsIsValid(jsFile);
+        parseWithDefaultOptions(jsFile);
         t.pass();
       },
     }),

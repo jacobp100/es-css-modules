@@ -1,5 +1,6 @@
 import {
   reject, flow, forEach, partial, map, castArray, keys, difference, isEmpty, without, filter,
+  pick,
 } from 'lodash/fp';
 import { resolve } from 'path';
 import postcss from 'postcss';
@@ -105,7 +106,7 @@ export default postcss.plugin('postcss-modules', ({
             const jsExportsWithoutNs = without(jsExports, '*');
 
             if (isEmpty(jsExportsWithoutNs)) {
-              return;
+              return { cssExports: {} };
             }
 
             const cssExports = flow(
@@ -127,13 +128,15 @@ export default postcss.plugin('postcss-modules', ({
                 result.warn(`Defined unused style "${unusedImport}"`);
               }, unusedImports);
             }
+
+            const tokensToExport = pick(cssExports, exportTokens);
+
+            return { tokensToExport };
           })
-          .then(() => {
-            const { exportTokens } = cssParser;
+          .then(({ tokensToExport }) => {
+            const styleExports = getStyleExports(tokensToExport);
 
-            const styleExports = getStyleExports(exportTokens);
-
-            getJsExports(css.source.input.file, styleExports, exportTokens);
+            getJsExports(css.source.input.file, styleExports, tokensToExport);
           })
           .then(() => res())
           .catch((e) => rej(e));
