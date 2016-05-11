@@ -1,57 +1,48 @@
-import {
-  flow, startsWith, endsWith, partial, negate, filter, first, toPairs, fromPairs,
-} from 'lodash/fp';
+import { flow, endsWith, filter, first, toPairs, fromPairs } from 'lodash/fp';
 import getEsImportsExports from 'get-es-imports-exports';
-import { join, isAbsolute, relative } from 'path';
 import { stat } from 'fs';
 
 
+const isFile = (path, cb) => {
+  if (endsWith('.css.js', path)) {
+    cb(null, false);
+    return;
+  }
+
+  stat(path, (err, s) => {
+    if (err && err.code === 'ENOENT') cb(null, false);
+    else if (err) cb(err);
+    else cb(null, s.isFile());
+  });
+};
+
+export const defaultResolveOptions = {
+  extensions: ['.css', '.js', '.json'],
+  isFile,
+};
+
+
 export default async ({
-  moduleExportDirectory,
   jsFiles: files,
   recurse,
   parser,
   parserOptions,
+  resolveOptions,
 }) => {
-  if (!isAbsolute(moduleExportDirectory)) {
-    throw new Error('Expected moduleExportsDirectory to be an absolute path');
-  }
-
-  const isInModuleExportsDirectory = flow(
-    partial(relative, [moduleExportDirectory]),
-    negate(startsWith('..'))
-  );
-
-  const isFile = (path, cb) => {
-    if (isInModuleExportsDirectory(path)) {
-      cb(null, endsWith('.css.js', path));
-      return;
-    }
-
-    stat(path, (err, s) => {
-      if (err && err.code === 'ENOENT') cb(null, false);
-      else if (err) cb(err);
-      else cb(null, s.isFile());
-    });
-  };
-
   const { imports } = await getEsImportsExports({
     files,
     recurse,
     parser,
     parserOptions,
-    exclude: join(moduleExportDirectory, '/**/*'),
-    resolveOptions: {
-      extensions: ['.js', '.json'],
-      isFile,
-    },
+    exclude: '/**/*.css',
+    resolveOptions,
   });
 
   const styleImports = flow(
     toPairs,
     filter(flow(
       first,
-      isInModuleExportsDirectory
+      endsWith('.css')
     )),
     fromPairs
   )(imports);

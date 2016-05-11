@@ -30,22 +30,15 @@ import esCssModules from 'es-css-modules';
 postcss([
   esCssModules({
     jsFiles: 'src/App.js',
-    moduleExportDirectory: 'styles',
   }),
 ])
   .process(...)
   .then(...);
 ```
 
-As a minimum, you must define the parameters `jsFiles` and `moduleExportDirectory`.
+As a minimum, you must define the parameters `jsFiles`. This is a path or an array of paths for the files you wish to check CSS imports. The paths can be absolute paths, or paths relative to `process.cwd()`. By default, the imports within files will be recursively checked.
 
-`jsFiles` is a path or an array of paths for the files you wish to check CSS imports. By default, the imports within files will be recursively checked.
-
-`moduleExportDirectory` is the directory in which to expect CSS files. Only CSS files within this directory are marked as CSS dependencies.
-
-Both these parameters can be absolute paths, or a path relative to `process.cwd()`.
-
-**By default, all your css files will generate a css.js file with the export names**. I.e. `export const button = "x3f6u";`. This behaviour can be customised via `getJsExports`, which is a function that is called with `(cssFilename, styleExports, styleExportsObject)`, where styleExports is JavaScript file string that specifies the exports, and styleExportsObject is an object whose keys is the export name, and values the corresponding export value.
+**By default, all your css files will generate a .css.js file with the export names**. I.e. `export const button = "x3f6u";`. This behaviour can be customised via `getJsExports`, which is a function that is called with `(cssFilename, styleExports, styleExportsObject)`, where styleExports is JavaScript file string that specifies the exports, and styleExportsObject is an object whose keys is the export name, and values the corresponding export value.
 
 As in default CSS modules, we generate a random-ish name for each class you define. To configure how classes are generated, you can specify the `generateScopedName` parameter, which is a function called with `(className, filename)`. This function is only called for classes that will actually be used, so it's perfectly safe to use something like [CSS Class Generator](https://github.com/jacobp100/css-class-generator) to generate names.
 
@@ -57,11 +50,12 @@ As stated before, jsFiles will recursively look for imports. This can be disable
 
 We use the parser used for ESLint and a default configuration that works for React. If you need to override the parser options, you can specify `parserOptions` using the [ESLint format](http://eslint.org/docs/user-guide/configuring#specifying-parser-options). You can also specify the entire parser via the `parser` property: to use babel-eslint, set the `parser` to `'babel-eslint'`.
 
+You can configure how modules are resolved via `resolveOptions`, which is the same as [node-resolve](https://github.com/substack/node-resolve). Above the standard options, we add `.css` to the extensions, and modifiy the `isFile` function to reject all `.css.js` files (so it won't try to load files that may be left behind after removing CSS files)
+
 The complete options are as follows,
 
 ```js
 esCssModules({
-  moduleExportDirectory,
   jsFiles,
   getJsExports,
   generateScopedName,
@@ -70,6 +64,7 @@ esCssModules({
   recurse,
   parser,
   parserOptions,
+  resolveOptions,
 })
 ```
 

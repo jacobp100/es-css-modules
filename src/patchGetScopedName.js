@@ -29,8 +29,7 @@ export default (Core, { removeUnusedClasses, generateScopedName, file }) => (sty
       throw new Error(`Class name ${name} is invalid`);
     }
 
-    const exportFile = `${filename}.js`;
-    const styleImport = styleImports[exportFile];
+    const styleImport = styleImports[filename];
 
     const isClass = css.indexOf(`.${name}`) !== -1;
     const animationRe = new RegExp(`@(?:[\\w]+-)?keyframes[\\s\\t\\n]*${name}`);
@@ -45,7 +44,7 @@ export default (Core, { removeUnusedClasses, generateScopedName, file }) => (sty
 
     const type = isClass ? 'class' : 'animation';
 
-    const currentValue = get([exportFile, name], scopedNames);
+    const currentValue = get([filename, name], scopedNames);
 
     if (currentValue) return currentValue;
 
@@ -59,7 +58,7 @@ export default (Core, { removeUnusedClasses, generateScopedName, file }) => (sty
 
     const value = generateScopedName(name, filename, css);
 
-    mutateSet(scopedNames, [exportFile, name], value);
+    mutateSet(scopedNames, [filename, name], value);
     mutateSet(typesPerName, [name], type);
 
     return value;

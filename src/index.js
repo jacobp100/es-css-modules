@@ -8,14 +8,14 @@ import Core from 'css-modules-loader-core';
 import Parser from 'css-modules-loader-core/lib/parser';
 import FileSystemLoader from 'css-modules-loader-core/lib/file-system-loader';
 import generateHashedScopedName from './generateHashedScopedName';
-import getStyleImports from './getStyleImports';
+import getStyleImports, { defaultResolveOptions } from './getStyleImports';
 import patchGetScopedName, { UNUSED_EXPORT } from './patchGetScopedName';
 import getStyleExports from './getStyleExports';
 import saveJsExports from './saveJsExports';
 import { defaultParser, defaultParserOptions } from 'get-es-imports-exports';
 
 
-export { defaultParser, defaultParserOptions, UNUSED_EXPORT };
+export { defaultParser, defaultParserOptions, defaultResolveOptions, UNUSED_EXPORT };
 
 
 const resolveCwd = partial(resolve, [process.cwd()]);
@@ -26,7 +26,7 @@ const resolveCwds = flow(
 
 
 export default postcss.plugin('postcss-modules', ({
-  moduleExportDirectory,
+  moduleExportDirectory, // removed
   jsFiles,
   getJsExports = saveJsExports,
   generateScopedName = generateHashedScopedName,
@@ -35,18 +35,24 @@ export default postcss.plugin('postcss-modules', ({
   recurse = true,
   parser = defaultParser,
   parserOptions = defaultParserOptions,
+  resolveOptions = defaultResolveOptions,
   Loader,
 } = {}) => {
   let styleImportsPromise;
 
+  if (moduleExportDirectory) {
+    // FIXME: Remove in v2
+    console.log('You no longer need to specify a module export directory. The API will work the same as before'); // eslint-disable-line
+  }
+
   const lazyGetDependencies = () => {
     if (!styleImportsPromise) {
       styleImportsPromise = getStyleImports({
-        moduleExportDirectory: resolveCwd(moduleExportDirectory),
         jsFiles: resolveCwds(jsFiles),
         recurse,
         parser,
         parserOptions,
+        resolveOptions,
       });
     }
 
@@ -80,7 +86,7 @@ export default postcss.plugin('postcss-modules', ({
         file,
       }))
       .then(({ styleImports, typesPerName }) => new Promise((res, rej) => {
-        const jsExports = styleImports[`${file}.js`];
+        const jsExports = styleImports[file];
 
         postcss([...plugins, cssParser.plugin, removeClasses([UNUSED_EXPORT])])
           .process(css, { from: file })
