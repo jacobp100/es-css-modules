@@ -1,10 +1,10 @@
 import test from 'ava';
-import { forEach, flow, map, startsWith } from 'lodash/fp';
+import { forEach, flow, map, startsWith, update, union } from 'lodash/fp';
 import { join } from 'path';
 import { parse } from 'espree';
 import { readFileSync } from 'fs';
 import postcss from 'postcss';
-import modulesEs, { defaultParserOptions, UNUSED_EXPORT } from '../src';
+import modulesEs, { defaultParserOptions, defaultResolveOptions, UNUSED_EXPORT } from '../src';
 
 const baseDir = join(__dirname, 'cases');
 const localImports = join(baseDir, 'local-imports');
@@ -21,6 +21,7 @@ const animationsDuplicateNames = join(baseDir, 'animations-duplicate-names');
 const multipleStyleDirectories = join(baseDir, 'multiple-style-directories');
 const noCss = join(baseDir, 'no-css');
 const noCssWithBinding = join(baseDir, 'no-css-with-binding');
+const jsxFile = join(baseDir, 'jsx-file');
 
 const parseWithDefaultOptions = contents => parse(contents, defaultParserOptions);
 const styleExportsIsValid = flow(
@@ -367,5 +368,43 @@ test.serial('it will ignore binding files when the css file is not found', t => 
     .process(readFileSync(button, 'utf-8'), { from: button })
     .catch((e) => {
       t.true(startsWith('Cannot find module \'./styles/button.css\'', e.message));
+    });
+});
+
+test.serial('does not by default include jsx files', t => {
+  t.plan(1);
+
+  const button = join(jsxFile, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(jsxFile, 'index.js'),
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .catch((e) => {
+      t.true(startsWith('Cannot find module \'./App\'', e.message));
+    });
+});
+
+test.serial('will parse jsx with custom resolve options', t => {
+  t.plan(1);
+
+  const button = join(jsxFile, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(jsxFile, 'index.js'),
+      getJsExports() {},
+      resloveOptions: update('extensions', union(['jsx']), defaultResolveOptions),
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .catch(() => {
+      t.pass();
     });
 });

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.UNUSED_EXPORT = exports.defaultParserOptions = exports.defaultParser = undefined;
+exports.UNUSED_EXPORT = exports.defaultResolveOptions = exports.defaultParserOptions = exports.defaultParser = undefined;
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
@@ -79,47 +79,43 @@ function _asyncToGenerator(fn) {
   };
 }
 
+const isFile = (path, cb) => {
+  if ((0, _fp.endsWith)('.css.js', path)) {
+    cb(null, false);
+    return;
+  }
+
+  (0, _fs.stat)(path, (err, s) => {
+    if (err && err.code === 'ENOENT') cb(null, false);else if (err) cb(err);else cb(null, s.isFile());
+  });
+};
+
+const defaultResolveOptions = {
+  extensions: ['.css', '.js', '.json'],
+  isFile: isFile
+};
+
 var getStyleImports = (() => {
   var ref = _asyncToGenerator(function* (_ref) {
-    let moduleExportDirectory = _ref.moduleExportDirectory;
     let files = _ref.jsFiles;
     let recurse = _ref.recurse;
     let parser = _ref.parser;
     let parserOptions = _ref.parserOptions;
-
-    if (!(0, _path.isAbsolute)(moduleExportDirectory)) {
-      throw new Error('Expected moduleExportsDirectory to be an absolute path');
-    }
-
-    const isInModuleExportsDirectory = (0, _fp.flow)((0, _fp.partial)(_path.relative, [moduleExportDirectory]), (0, _fp.negate)((0, _fp.startsWith)('..')));
-
-    const isFile = function (path, cb) {
-      if (isInModuleExportsDirectory(path)) {
-        cb(null, (0, _fp.endsWith)('.css.js', path));
-        return;
-      }
-
-      (0, _fs.stat)(path, function (err, s) {
-        if (err && err.code === 'ENOENT') cb(null, false);else if (err) cb(err);else cb(null, s.isFile());
-      });
-    };
+    let resolveOptions = _ref.resolveOptions;
 
     var _ref2 = yield (0, _getEsImportsExports2.default)({
       files: files,
       recurse: recurse,
       parser: parser,
       parserOptions: parserOptions,
-      exclude: (0, _path.join)(moduleExportDirectory, '/**/*'),
-      resolveOptions: {
-        extensions: ['.js', '.json'],
-        isFile: isFile
-      }
+      exclude: '/**/*.css',
+      resolveOptions: resolveOptions
     });
 
     const imports = _ref2.imports;
 
 
-    const styleImports = (0, _fp.flow)(_fp.toPairs, (0, _fp.filter)((0, _fp.flow)(_fp.first, isInModuleExportsDirectory)), _fp.fromPairs)(imports);
+    const styleImports = (0, _fp.flow)(_fp.toPairs, (0, _fp.filter)((0, _fp.flow)(_fp.first, (0, _fp.endsWith)('.css'))), _fp.fromPairs)(imports);
 
     return styleImports;
   });
@@ -154,8 +150,7 @@ var patchGetScopedName = (Core, _ref3) => {
         throw new Error(`Class name ${ name } is invalid`);
       }
 
-      const exportFile = `${ filename }.js`;
-      const styleImport = styleImports[exportFile];
+      const styleImport = styleImports[filename];
 
       const isClass = css.indexOf(`.${ name }`) !== -1;
       const animationRe = new RegExp(`@(?:[\\w]+-)?keyframes[\\s\\t\\n]*${ name }`);
@@ -167,7 +162,7 @@ var patchGetScopedName = (Core, _ref3) => {
 
       const type = isClass ? 'class' : 'animation';
 
-      const currentValue = (0, _fp.get)([exportFile, name], scopedNames);
+      const currentValue = (0, _fp.get)([filename, name], scopedNames);
 
       if (currentValue) return currentValue;
 
@@ -177,7 +172,7 @@ var patchGetScopedName = (Core, _ref3) => {
 
       const value = generateScopedName(name, filename, css);
 
-      (0, _lodash.set)(scopedNames, [exportFile, name], value);
+      (0, _lodash.set)(scopedNames, [filename, name], value);
       (0, _lodash.set)(typesPerName, [name], type);
 
       return value;
@@ -214,7 +209,8 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
   var _ref8 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
   let moduleExportDirectory = _ref8.moduleExportDirectory;
-  let jsFiles = _ref8.jsFiles;
+  let // removed
+  jsFiles = _ref8.jsFiles;
   var _ref8$getJsExports = _ref8.getJsExports;
   let getJsExports = _ref8$getJsExports === undefined ? saveJsExports : _ref8$getJsExports;
   var _ref8$generateScopedN = _ref8.generateScopedName;
@@ -229,18 +225,25 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
   let parser = _ref8$parser === undefined ? _getEsImportsExports.defaultParser : _ref8$parser;
   var _ref8$parserOptions = _ref8.parserOptions;
   let parserOptions = _ref8$parserOptions === undefined ? _getEsImportsExports.defaultParserOptions : _ref8$parserOptions;
+  var _ref8$resolveOptions = _ref8.resolveOptions;
+  let resolveOptions = _ref8$resolveOptions === undefined ? defaultResolveOptions : _ref8$resolveOptions;
   let Loader = _ref8.Loader;
 
   let styleImportsPromise;
 
+  if (moduleExportDirectory) {
+    // FIXME: Remove in v2
+    console.log('You no longer need to specify a module export directory. The API will work the same as before'); // eslint-disable-line
+  }
+
   const lazyGetDependencies = () => {
     if (!styleImportsPromise) {
       styleImportsPromise = getStyleImports({
-        moduleExportDirectory: resolveCwd(moduleExportDirectory),
         jsFiles: resolveCwds(jsFiles),
         recurse: recurse,
         parser: parser,
-        parserOptions: parserOptions
+        parserOptions: parserOptions,
+        resolveOptions: resolveOptions
       });
     }
 
@@ -266,7 +269,7 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
       let styleImports = _ref9.styleImports;
       let typesPerName = _ref9.typesPerName;
       return new Promise((res, rej) => {
-        const jsExports = styleImports[`${ file }.js`];
+        const jsExports = styleImports[file];
 
         (0, _postcss2.default)([].concat(_toConsumableArray(plugins), [cssParser.plugin, (0, _postcssRemoveClasses2.default)([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
           (0, _fp.forEach)(source => {
@@ -317,5 +320,6 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
 
 exports.defaultParser = _getEsImportsExports.defaultParser;
 exports.defaultParserOptions = _getEsImportsExports.defaultParserOptions;
+exports.defaultResolveOptions = defaultResolveOptions;
 exports.UNUSED_EXPORT = UNUSED_EXPORT;
 exports.default = index;

@@ -24,7 +24,7 @@
     "css-modules-loader-core": "^1.0.0",
     "get-es-imports-exports": "^1.0.4",
     "is-keyword-js": "^1.0.3",
-    "lodash": "^4.11.2",
+    "lodash": "^4.12.0",
     "postcss": "^5.0.21",
     "postcss-remove-classes": "0.0.3",
     "string-hash": "^1.1.0"
