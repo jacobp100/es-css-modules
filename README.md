@@ -22,6 +22,16 @@ ES6 brought in import/export syntax, which now means that it is possible to stat
 
 An additional advantage of this is that physical JavaScript files are created. This means that you are not tied to a specific module bundler for your JS files: using ES CSS Modules means you can now use Rollup.
 
+# Setup
+
+Import the CSS files using regular import/export, using the extension `.m.css`. To import `../styles/button.css`, use the following,
+
+```js
+import { button, red } from '../styles/button.m.css'; // Imports ../styles/button.css
+```
+
+When processing this with ES CSS Modules, it will generate a `.m.css.js` file, so you can bundle it or run it in node as normal.
+
 # API
 
 ```js
@@ -38,7 +48,7 @@ postcss([
 
 As a minimum, you must define the parameter `jsFiles`. This is a path or an array of paths for the files you wish to check CSS imports. The paths can be absolute paths, or paths relative to `process.cwd()`. By default, the imports within files will be recursively checked.
 
-**By default, all your css files will generate a .css.js file with the export names**. I.e. `export const button = "x3f6u";`. This behaviour can be customised via `getJsExports`, which is a function that is called with `(cssFilename, styleExports, styleExportsObject)`, where styleExports is JavaScript file string that specifies the exports, and styleExportsObject is an object whose keys is the export name, and values the corresponding export value.
+**By default, all your css files will generate a .m.css.js file with the export names**. I.e. `export const button = "x3f6u";`. This behaviour can be customised via `getJsExports`, which is a function that is called with `(cssFilename, styleExports, styleExportsObject)`, where styleExports is JavaScript file string that specifies the exports, and styleExportsObject is an object whose keys is the export name, and values the corresponding export value.
 
 As in default CSS modules, we generate a random-ish name for each class you define. To configure how classes are generated, you can specify the `generateScopedName` parameter, which is a function called with `(className, filename, cssFileContents)`. This function is only called for classes that will actually be used, so it's perfectly safe to use something like [CSS Class Generator](https://github.com/jacobp100/css-class-generator) to generate names.
 

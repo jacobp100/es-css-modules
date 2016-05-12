@@ -18,18 +18,26 @@ const isValidClassname = overEvery([
 const hasNamespaceImport = includes('*');
 
 
-export default (Core, { removeUnusedClasses, generateScopedName, file }) => (styleImports) => {
+export default (
+  Core,
+  { removeUnusedClasses, generateScopedName, file }
+) => ({ styleImports, cssToCssModuleMap }) => {
   // We mutate these objects, and return an object that will later be mutated
   const scopedNames = {};
   const typesPerName = {};
 
   Core.scope.generateScopedName = (name, filename, css) => { // eslint-disable-line
-    const styleImport = styleImports[filename];
+    const moduleFilename = cssToCssModuleMap[filename];
+    const styleImport = styleImports[moduleFilename];
 
-    const notValidIdent = '(?:[^\\w\\d-_]|$)';
-    const classRe = new RegExp(`\\.${name}${notValidIdent}`);
+    const notValidIdentCharacter = '(?:[^\\w\\d-_]|$)';
+    const classRe = new RegExp(
+      String.raw`\.${name}${notValidIdentCharacter}`
+    );
     const isClass = css.search(classRe) !== -1;
-    const animationRe = new RegExp(`@(?:[\\w]+-)?keyframes[\\s\\t\\n]*${name}${notValidIdent}`);
+    const animationRe = new RegExp(
+      String.raw`@(?:-[\w]+-)?keyframes[\s\t\n]*${name}${notValidIdentCharacter}`
+    );
     const isAnimation = css.search(animationRe) !== -1;
 
     if (isClass && isAnimation) {
@@ -66,5 +74,5 @@ export default (Core, { removeUnusedClasses, generateScopedName, file }) => (sty
     return value;
   };
 
-  return { styleImports, typesPerName };
+  return { styleImports, cssToCssModuleMap, typesPerName };
 };

@@ -20,10 +20,12 @@ const animations = join(baseDir, 'animations');
 const animationsInvalidJsIdent = join(baseDir, 'animations-invalid-js-ident');
 const animationsDuplicateNames = join(baseDir, 'animations-duplicate-names');
 const animationsSimilarNames = join(baseDir, 'animations-similar-names');
+const animationsVendorPrefixed = join(baseDir, 'animations-vendor-prefixed');
 const multipleStyleDirectories = join(baseDir, 'multiple-style-directories');
 const noCss = join(baseDir, 'no-css');
 const noCssWithBinding = join(baseDir, 'no-css-with-binding');
 const jsxFile = join(baseDir, 'jsx-file');
+const importWithoutMCss = join(baseDir, 'import-without-m-css');
 
 const parseWithDefaultOptions = contents => parse(contents, defaultParserOptions);
 
@@ -349,6 +351,30 @@ test.serial('animations similar names, but not duplicate', t => {
     });
 });
 
+test.serial('animations with vendor prefixes work', t => {
+  t.plan(4);
+
+  const button = join(animationsVendorPrefixed, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(animationsVendorPrefixed, 'App.js'),
+      getJsExports(name, jsFile) {
+        parseWithDefaultOptions(jsFile);
+        t.pass();
+      },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
+      t.not(css.indexOf('fadeIn'), -1);
+      t.is(messages.length, 0);
+    });
+});
+
 test.serial('works with multiple style files', t => {
   t.plan(6);
 
@@ -395,7 +421,7 @@ test.serial('it will throw when the css file is not found', t => {
   return processor
     .process(readFileSync(button, 'utf-8'), { from: button })
     .catch((e) => {
-      t.true(startsWith('Cannot find module \'./styles/button.css\'', e.message));
+      t.true(startsWith('Cannot find module \'./styles/button.m.css\'', e.message));
     });
 });
 
@@ -413,7 +439,7 @@ test.serial('it will ignore binding files when the css file is not found', t => 
   return processor
     .process(readFileSync(button, 'utf-8'), { from: button })
     .catch((e) => {
-      t.true(startsWith('Cannot find module \'./styles/button.css\'', e.message));
+      t.true(startsWith('Cannot find module \'./styles/button.m.css\'', e.message));
     });
 });
 
@@ -443,6 +469,26 @@ test.serial('will parse jsx with custom resolve options', t => {
   const processor = postcss([
     modulesEs({
       jsFiles: join(jsxFile, 'index.js'),
+      getJsExports() {},
+      resloveOptions: update('extensions', union(['jsx']), defaultResolveOptions),
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .catch(() => {
+      t.pass();
+    });
+});
+
+test.serial('allows you to import .css without the .m.css extension', t => {
+  t.plan(1);
+
+  const button = join(importWithoutMCss, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(importWithoutMCss, 'index.js'),
       getJsExports() {},
       resloveOptions: update('extensions', union(['jsx']), defaultResolveOptions),
     }),

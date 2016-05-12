@@ -79,20 +79,44 @@ function _asyncToGenerator(fn) {
   };
 }
 
-const isFile = (path, cb) => {
-  if ((0, _fp.endsWith)('.css.js', path)) {
-    cb(null, false);
-    return;
-  }
+const getPathWithoutModule = path => path.replace(/\.m.css$/, '.css');
 
+const isFile = (path, cb) => {
   (0, _fs.stat)(path, (err, s) => {
     if (err && err.code === 'ENOENT') cb(null, false);else if (err) cb(err);else cb(null, s.isFile());
   });
 };
 
+const resolneMCssWithoutModule = (path, cb) => {
+  const pathWithoutModule = getPathWithoutModule(path);
+  isFile(pathWithoutModule, (err, cssFileExists) => {
+    if (err) cb(err);else if (cssFileExists) cb(null, pathWithoutModule);else cb(null, null);
+  });
+};
+
+const resolveMCss = (path, cb) => {
+  isFile(path, (err, moduleCssFileExists) => {
+    if (err) cb(err);else if (moduleCssFileExists) cb(null, path);else resolneMCssWithoutModule(path, cb);
+  });
+};
+
+const resolveIsFile = (path, cb) => {
+  if ((0, _fp.endsWith)('.css.js', path)) {
+    // Don't allow this, as it may be an artifact from a previous build, but no longer relevant
+    cb(null, false);
+  } else if ((0, _fp.endsWith)('.m.css', path)) {
+    // Check file.m.css, if that doesn't exist, fallback to file.css
+    resolveMCss(path, (err, resolvedPath) => {
+      cb(err, resolvedPath !== null);
+    });
+  } else {
+    isFile(path, cb);
+  }
+};
+
 const defaultResolveOptions = {
   extensions: ['.css', '.js', '.json'],
-  isFile: isFile
+  isFile: resolveIsFile
 };
 
 var getStyleImports = (() => {
@@ -117,7 +141,17 @@ var getStyleImports = (() => {
 
     const styleImports = (0, _fp.flow)(_fp.toPairs, (0, _fp.filter)((0, _fp.flow)(_fp.first, (0, _fp.endsWith)('.css'))), _fp.fromPairs)(imports);
 
-    return styleImports;
+    const cssToCssModuleMapPairsPromises = (0, _fp.flow)(_fp.keys, (0, _fp.map)(function (path) {
+      return new Promise(function (res, rej) {
+        resolveMCss(path, function (err, resolvedPath) {
+          if (err) rej(err);else res([resolvedPath, path]);
+        });
+      });
+    }))(styleImports);
+
+    const cssToCssModuleMap = (0, _fp.fromPairs)((yield Promise.all(cssToCssModuleMapPairsPromises)));
+
+    return { styleImports: styleImports, cssToCssModuleMap: cssToCssModuleMap };
   });
 
   return function (_x) {
@@ -138,19 +172,23 @@ var patchGetScopedName = (Core, _ref3) => {
   let removeUnusedClasses = _ref3.removeUnusedClasses;
   let generateScopedName = _ref3.generateScopedName;
   let file = _ref3.file;
-  return styleImports => {
+  return _ref4 => {
+    let styleImports = _ref4.styleImports;
+    let cssToCssModuleMap = _ref4.cssToCssModuleMap;
+
     // We mutate these objects, and return an object that will later be mutated
     const scopedNames = {};
     const typesPerName = {};
 
     Core.scope.generateScopedName = (name, filename, css) => {
       // eslint-disable-line
-      const styleImport = styleImports[filename];
+      const moduleFilename = cssToCssModuleMap[filename];
+      const styleImport = styleImports[moduleFilename];
 
-      const notValidIdent = '(?:[^\\w\\d-_]|$)';
-      const classRe = new RegExp(`\\.${ name }${ notValidIdent }`);
+      const notValidIdentCharacter = '(?:[^\\w\\d-_]|$)';
+      const classRe = new RegExp(String.raw`\.${ name }${ notValidIdentCharacter }`);
       const isClass = css.search(classRe) !== -1;
-      const animationRe = new RegExp(`@(?:[\\w]+-)?keyframes[\\s\\t\\n]*${ name }${ notValidIdent }`);
+      const animationRe = new RegExp(String.raw`@(?:-[\w]+-)?keyframes[\s\t\n]*${ name }${ notValidIdentCharacter }`);
       const isAnimation = css.search(animationRe) !== -1;
 
       if (isClass && isAnimation) {
@@ -180,21 +218,21 @@ var patchGetScopedName = (Core, _ref3) => {
       return value;
     };
 
-    return { styleImports: styleImports, typesPerName: typesPerName };
+    return { styleImports: styleImports, cssToCssModuleMap: cssToCssModuleMap, typesPerName: typesPerName };
   };
 };
 
-const defaultExport = _ref4 => {
-  var _ref5 = _slicedToArray(_ref4, 2);
+const defaultExport = _ref5 => {
+  var _ref6 = _slicedToArray(_ref5, 2);
 
-  let exportName = _ref5[1];
+  let exportName = _ref6[1];
   return `export default '${ exportName }';\n`;
 };
-const constExport = _ref6 => {
-  var _ref7 = _slicedToArray(_ref6, 2);
+const constExport = _ref7 => {
+  var _ref8 = _slicedToArray(_ref7, 2);
 
-  let importName = _ref7[0];
-  let exportName = _ref7[1];
+  let importName = _ref8[0];
+  let exportName = _ref8[1];
   return `export const ${ importName } = '${ exportName }';\n`;
 };
 
@@ -208,28 +246,28 @@ const resolveCwd = (0, _fp.partial)(_path.resolve, [process.cwd()]);
 const resolveCwds = (0, _fp.flow)(_fp.castArray, (0, _fp.map)(resolveCwd));
 
 var index = _postcss2.default.plugin('postcss-modules', function () {
-  var _ref8 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var _ref9 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-  let moduleExportDirectory = _ref8.moduleExportDirectory;
+  let moduleExportDirectory = _ref9.moduleExportDirectory;
   let // removed
-  jsFiles = _ref8.jsFiles;
-  var _ref8$getJsExports = _ref8.getJsExports;
-  let getJsExports = _ref8$getJsExports === undefined ? saveJsExports : _ref8$getJsExports;
-  var _ref8$generateScopedN = _ref8.generateScopedName;
-  let generateScopedName = _ref8$generateScopedN === undefined ? generateHashedScopedName : _ref8$generateScopedN;
-  var _ref8$warnOnUnusedCla = _ref8.warnOnUnusedClasses;
-  let warnOnUnusedClasses = _ref8$warnOnUnusedCla === undefined ? true : _ref8$warnOnUnusedCla;
-  var _ref8$removeUnusedCla = _ref8.removeUnusedClasses;
-  let removeUnusedClasses = _ref8$removeUnusedCla === undefined ? true : _ref8$removeUnusedCla;
-  var _ref8$recurse = _ref8.recurse;
-  let recurse = _ref8$recurse === undefined ? true : _ref8$recurse;
-  var _ref8$parser = _ref8.parser;
-  let parser = _ref8$parser === undefined ? _getEsImportsExports.defaultParser : _ref8$parser;
-  var _ref8$parserOptions = _ref8.parserOptions;
-  let parserOptions = _ref8$parserOptions === undefined ? _getEsImportsExports.defaultParserOptions : _ref8$parserOptions;
-  var _ref8$resolveOptions = _ref8.resolveOptions;
-  let resolveOptions = _ref8$resolveOptions === undefined ? defaultResolveOptions : _ref8$resolveOptions;
-  let Loader = _ref8.Loader;
+  jsFiles = _ref9.jsFiles;
+  var _ref9$getJsExports = _ref9.getJsExports;
+  let getJsExports = _ref9$getJsExports === undefined ? saveJsExports : _ref9$getJsExports;
+  var _ref9$generateScopedN = _ref9.generateScopedName;
+  let generateScopedName = _ref9$generateScopedN === undefined ? generateHashedScopedName : _ref9$generateScopedN;
+  var _ref9$warnOnUnusedCla = _ref9.warnOnUnusedClasses;
+  let warnOnUnusedClasses = _ref9$warnOnUnusedCla === undefined ? true : _ref9$warnOnUnusedCla;
+  var _ref9$removeUnusedCla = _ref9.removeUnusedClasses;
+  let removeUnusedClasses = _ref9$removeUnusedCla === undefined ? true : _ref9$removeUnusedCla;
+  var _ref9$recurse = _ref9.recurse;
+  let recurse = _ref9$recurse === undefined ? true : _ref9$recurse;
+  var _ref9$parser = _ref9.parser;
+  let parser = _ref9$parser === undefined ? _getEsImportsExports.defaultParser : _ref9$parser;
+  var _ref9$parserOptions = _ref9.parserOptions;
+  let parserOptions = _ref9$parserOptions === undefined ? _getEsImportsExports.defaultParserOptions : _ref9$parserOptions;
+  var _ref9$resolveOptions = _ref9.resolveOptions;
+  let resolveOptions = _ref9$resolveOptions === undefined ? defaultResolveOptions : _ref9$resolveOptions;
+  let Loader = _ref9.Loader;
 
   let styleImportsPromise;
 
@@ -267,11 +305,13 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
       removeUnusedClasses: removeUnusedClasses,
       generateScopedName: generateScopedName,
       file: file
-    })).then(_ref9 => {
-      let styleImports = _ref9.styleImports;
-      let typesPerName = _ref9.typesPerName;
+    })).then(_ref10 => {
+      let styleImports = _ref10.styleImports;
+      let cssToCssModuleMap = _ref10.cssToCssModuleMap;
+      let typesPerName = _ref10.typesPerName;
       return new Promise((res, rej) => {
-        const jsExports = styleImports[file];
+        const moduleFilename = cssToCssModuleMap[file];
+        const jsExports = styleImports[moduleFilename];
 
         (0, _postcss2.default)([].concat(_toConsumableArray(plugins), [cssParser.plugin, (0, _postcssRemoveClasses2.default)([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
           (0, _fp.forEach)(source => {
@@ -311,12 +351,12 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
           const tokensToExport = (0, _fp.pick)(cssExports, exportTokens);
 
           return { tokensToExport: tokensToExport };
-        }).then(_ref10 => {
-          let tokensToExport = _ref10.tokensToExport;
+        }).then(_ref11 => {
+          let tokensToExport = _ref11.tokensToExport;
 
           const styleExports = getStyleExports(tokensToExport);
 
-          getJsExports(css.source.input.file, styleExports, tokensToExport);
+          getJsExports(moduleFilename, styleExports, tokensToExport);
         }).then(() => res()).catch(e => rej(e));
       });
     });

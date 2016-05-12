@@ -86,8 +86,9 @@ export default postcss.plugin('postcss-modules', ({
         generateScopedName,
         file,
       }))
-      .then(({ styleImports, typesPerName }) => new Promise((res, rej) => {
-        const jsExports = styleImports[file];
+      .then(({ styleImports, cssToCssModuleMap, typesPerName }) => new Promise((res, rej) => {
+        const moduleFilename = cssToCssModuleMap[file];
+        const jsExports = styleImports[moduleFilename];
 
         postcss([...plugins, cssParser.plugin, removeClasses([UNUSED_EXPORT])])
           .process(css, { from: file })
@@ -136,7 +137,7 @@ export default postcss.plugin('postcss-modules', ({
           .then(({ tokensToExport }) => {
             const styleExports = getStyleExports(tokensToExport);
 
-            getJsExports(css.source.input.file, styleExports, tokensToExport);
+            getJsExports(moduleFilename, styleExports, tokensToExport);
           })
           .then(() => res())
           .catch((e) => rej(e));
