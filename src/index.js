@@ -26,7 +26,7 @@ const resolveCwds = flow(
 );
 
 
-export default postcss.plugin('postcss-modules', ({
+export default postcss.plugin('es-css-modules', ({
   moduleExportDirectory, // removed
   jsFiles,
   getJsExports = saveJsExports,
@@ -64,7 +64,7 @@ export default postcss.plugin('postcss-modules', ({
   return (css, result) => {
     const resultPlugins = flow(
       reject({ postcssPlugin: 'postcss-modules' }),
-      reject({ postcssPlugin: 'postcss-modules-es' })
+      reject({ postcssPlugin: 'es-css-modules' })
     )(result.processor.plugins);
 
     const plugins = [
@@ -87,7 +87,8 @@ export default postcss.plugin('postcss-modules', ({
         file,
       }))
       .then(({ styleImports, cssToCssModuleMap, typesPerName }) => new Promise((res, rej) => {
-        const moduleFilename = cssToCssModuleMap[file];
+        // They might have a css file that has global styles, but not import it. Allow fallback here
+        const moduleFilename = cssToCssModuleMap[file] || file;
         const jsExports = styleImports[moduleFilename];
 
         postcss([...plugins, cssParser.plugin, removeClasses([UNUSED_EXPORT])])
@@ -107,7 +108,7 @@ export default postcss.plugin('postcss-modules', ({
             const jsExportsWithoutNs = without(jsExports, '*');
 
             if (isEmpty(jsExportsWithoutNs)) {
-              return { cssExports: {} };
+              return { tokensToExport: {} };
             }
 
             const cssExports = flow(

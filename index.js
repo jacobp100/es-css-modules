@@ -245,7 +245,7 @@ var saveJsExports = (cssFile, js) => {
 const resolveCwd = (0, _fp.partial)(_path.resolve, [process.cwd()]);
 const resolveCwds = (0, _fp.flow)(_fp.castArray, (0, _fp.map)(resolveCwd));
 
-var index = _postcss2.default.plugin('postcss-modules', function () {
+var index = _postcss2.default.plugin('es-css-modules', function () {
   var _ref9 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
   let moduleExportDirectory = _ref9.moduleExportDirectory;
@@ -291,7 +291,7 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
   };
 
   return (css, result) => {
-    const resultPlugins = (0, _fp.flow)((0, _fp.reject)({ postcssPlugin: 'postcss-modules' }), (0, _fp.reject)({ postcssPlugin: 'postcss-modules-es' }))(result.processor.plugins);
+    const resultPlugins = (0, _fp.flow)((0, _fp.reject)({ postcssPlugin: 'postcss-modules' }), (0, _fp.reject)({ postcssPlugin: 'es-css-modules' }))(result.processor.plugins);
 
     const plugins = [].concat(_toConsumableArray(_cssModulesLoaderCore2.default.defaultPlugins), _toConsumableArray(resultPlugins));
 
@@ -310,7 +310,8 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
       let cssToCssModuleMap = _ref10.cssToCssModuleMap;
       let typesPerName = _ref10.typesPerName;
       return new Promise((res, rej) => {
-        const moduleFilename = cssToCssModuleMap[file];
+        // They might have a css file that has global styles, but not import it. Allow fallback here
+        const moduleFilename = cssToCssModuleMap[file] || file;
         const jsExports = styleImports[moduleFilename];
 
         (0, _postcss2.default)([].concat(_toConsumableArray(plugins), [cssParser.plugin, (0, _postcssRemoveClasses2.default)([UNUSED_EXPORT])])).process(css, { from: file }).then(() => {
@@ -328,7 +329,7 @@ var index = _postcss2.default.plugin('postcss-modules', function () {
           const jsExportsWithoutNs = (0, _fp.without)(jsExports, '*');
 
           if ((0, _fp.isEmpty)(jsExportsWithoutNs)) {
-            return { cssExports: {} };
+            return { tokensToExport: {} };
           }
 
           const cssExports = (0, _fp.flow)(_fp.keys, (0, _fp.filter)(name => typesPerName[name] !== 'animation'))(exportTokens);
