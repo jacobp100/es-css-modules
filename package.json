@@ -1,6 +1,6 @@
 {
   "name": "es-css-modules",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "PostCSS plugin that combines CSS Modules and ES Imports",
   "main": "index.js",
   "jsnext:main": "src/index.js",
@@ -22,7 +22,6 @@
   "license": "ISC",
   "dependencies": {
     "css-modules-loader-core": "^1.0.0",
-    "get-es-imports": "^1.0.1",
     "get-es-imports-exports": "^1.0.4",
     "is-keyword-js": "^1.0.3",
     "lodash": "^4.12.0",
