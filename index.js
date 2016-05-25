@@ -326,7 +326,7 @@ var index = _postcss2.default.plugin('es-css-modules', function () {
             result.warn('Defined local styles, but the css file was never imported');
           }
 
-          const jsExportsWithoutNs = (0, _fp.without)(jsExports, '*');
+          const jsExportsWithoutNs = (0, _fp.without)(['*'], jsExports);
 
           if ((0, _fp.isEmpty)(jsExportsWithoutNs)) {
             return { tokensToExport: {} };
