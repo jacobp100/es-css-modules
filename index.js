@@ -132,7 +132,7 @@ var getStyleImports = (() => {
       recurse: recurse,
       parser: parser,
       parserOptions: parserOptions,
-      exclude: '/**/*.css',
+      exclude: '**/*.css',
       resolveOptions: resolveOptions
     });
 

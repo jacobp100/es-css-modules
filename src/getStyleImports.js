@@ -64,7 +64,7 @@ export default async ({
     recurse,
     parser,
     parserOptions,
-    exclude: '/**/*.css',
+    exclude: '**/*.css',
     resolveOptions,
   });
 
