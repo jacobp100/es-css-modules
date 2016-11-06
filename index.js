@@ -69,9 +69,9 @@ function _asyncToGenerator(fn) {
           resolve(value);
         } else {
           return Promise.resolve(value).then(function (value) {
-            return step("next", value);
+            step("next", value);
           }, function (err) {
-            return step("throw", err);
+            step("throw", err);
           });
         }
       }return step("next");
@@ -120,14 +120,14 @@ const defaultResolveOptions = {
 };
 
 var getStyleImports = (() => {
-  var ref = _asyncToGenerator(function* (_ref) {
-    let files = _ref.jsFiles;
-    let recurse = _ref.recurse;
-    let parser = _ref.parser;
-    let parserOptions = _ref.parserOptions;
-    let resolveOptions = _ref.resolveOptions;
+  var _ref = _asyncToGenerator(function* (_ref2) {
+    let files = _ref2.jsFiles,
+        recurse = _ref2.recurse,
+        parser = _ref2.parser,
+        parserOptions = _ref2.parserOptions,
+        resolveOptions = _ref2.resolveOptions;
 
-    var _ref2 = yield (0, _getEsImportsExports2.default)({
+    var _ref3 = yield (0, _getEsImportsExports2.default)({
       files: files,
       recurse: recurse,
       parser: parser,
@@ -136,7 +136,7 @@ var getStyleImports = (() => {
       resolveOptions: resolveOptions
     });
 
-    const imports = _ref2.imports;
+    const imports = _ref3.imports;
 
 
     const styleImports = (0, _fp.flow)(_fp.toPairs, (0, _fp.filter)((0, _fp.flow)(_fp.first, (0, _fp.endsWith)('.css'))), _fp.fromPairs)(imports);
@@ -155,7 +155,7 @@ var getStyleImports = (() => {
   });
 
   return function (_x) {
-    return ref.apply(this, arguments);
+    return _ref.apply(this, arguments);
   };
 })();
 
@@ -168,13 +168,13 @@ const isValidClassname = (0, _fp.overEvery)([isValidJsIdent, (0, _fp.overSome)([
 
 const hasNamespaceImport = (0, _fp.includes)('*');
 
-var patchGetScopedName = (Core, _ref3) => {
-  let removeUnusedClasses = _ref3.removeUnusedClasses;
-  let generateScopedName = _ref3.generateScopedName;
-  let file = _ref3.file;
-  return _ref4 => {
-    let styleImports = _ref4.styleImports;
-    let cssToCssModuleMap = _ref4.cssToCssModuleMap;
+var patchGetScopedName = (Core, _ref4) => {
+  let removeUnusedClasses = _ref4.removeUnusedClasses,
+      generateScopedName = _ref4.generateScopedName,
+      file = _ref4.file;
+  return (_ref5) => {
+    let styleImports = _ref5.styleImports,
+        cssToCssModuleMap = _ref5.cssToCssModuleMap;
 
     // We mutate these objects, and return an object that will later be mutated
     const scopedNames = {};
@@ -195,7 +195,9 @@ var patchGetScopedName = (Core, _ref3) => {
         throw new Error(`You defined ${ name } as both a class and an animation. ` + 'See https://github.com/css-modules/postcss-modules-scope/issues/8');
       }
 
-      if (isClass && !isValidClassname(name)) {
+      if (file === filename && isClass && !isValidClassname(name)) {
+        // Must be current file
+        // `composes: otherwise-invalid-export from 'somewhere-else.css'` is valid
         // Throws within promise, goes to .catch(...)
         throw new Error(`Class name ${ name } is invalid`);
       }
@@ -222,17 +224,17 @@ var patchGetScopedName = (Core, _ref3) => {
   };
 };
 
-const defaultExport = _ref5 => {
-  var _ref6 = _slicedToArray(_ref5, 2);
+const defaultExport = (_ref6) => {
+  var _ref7 = _slicedToArray(_ref6, 2);
 
-  let exportName = _ref6[1];
+  let exportName = _ref7[1];
   return `export default '${ exportName }';\n`;
 };
-const constExport = _ref7 => {
-  var _ref8 = _slicedToArray(_ref7, 2);
+const constExport = (_ref8) => {
+  var _ref9 = _slicedToArray(_ref8, 2);
 
-  let importName = _ref8[0];
-  let exportName = _ref8[1];
+  let importName = _ref9[0],
+      exportName = _ref9[1];
   return `export const ${ importName } = '${ exportName }';\n`;
 };
 
@@ -246,28 +248,27 @@ const resolveCwd = (0, _fp.partial)(_path.resolve, [process.cwd()]);
 const resolveCwds = (0, _fp.flow)(_fp.castArray, (0, _fp.map)(resolveCwd));
 
 var index = _postcss2.default.plugin('es-css-modules', function () {
-  var _ref9 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var _ref10 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-  let moduleExportDirectory = _ref9.moduleExportDirectory;
-  let // removed
-  jsFiles = _ref9.jsFiles;
-  var _ref9$getJsExports = _ref9.getJsExports;
-  let getJsExports = _ref9$getJsExports === undefined ? saveJsExports : _ref9$getJsExports;
-  var _ref9$generateScopedN = _ref9.generateScopedName;
-  let generateScopedName = _ref9$generateScopedN === undefined ? generateHashedScopedName : _ref9$generateScopedN;
-  var _ref9$warnOnUnusedCla = _ref9.warnOnUnusedClasses;
-  let warnOnUnusedClasses = _ref9$warnOnUnusedCla === undefined ? true : _ref9$warnOnUnusedCla;
-  var _ref9$removeUnusedCla = _ref9.removeUnusedClasses;
-  let removeUnusedClasses = _ref9$removeUnusedCla === undefined ? true : _ref9$removeUnusedCla;
-  var _ref9$recurse = _ref9.recurse;
-  let recurse = _ref9$recurse === undefined ? true : _ref9$recurse;
-  var _ref9$parser = _ref9.parser;
-  let parser = _ref9$parser === undefined ? _getEsImportsExports.defaultParser : _ref9$parser;
-  var _ref9$parserOptions = _ref9.parserOptions;
-  let parserOptions = _ref9$parserOptions === undefined ? _getEsImportsExports.defaultParserOptions : _ref9$parserOptions;
-  var _ref9$resolveOptions = _ref9.resolveOptions;
-  let resolveOptions = _ref9$resolveOptions === undefined ? defaultResolveOptions : _ref9$resolveOptions;
-  let Loader = _ref9.Loader;
+  let moduleExportDirectory = _ref10.moduleExportDirectory,
+      jsFiles = _ref10.jsFiles;
+  var _ref10$getJsExports = _ref10.getJsExports;
+  let getJsExports = _ref10$getJsExports === undefined ? saveJsExports : _ref10$getJsExports;
+  var _ref10$generateScoped = _ref10.generateScopedName;
+  let generateScopedName = _ref10$generateScoped === undefined ? generateHashedScopedName : _ref10$generateScoped;
+  var _ref10$warnOnUnusedCl = _ref10.warnOnUnusedClasses;
+  let warnOnUnusedClasses = _ref10$warnOnUnusedCl === undefined ? true : _ref10$warnOnUnusedCl;
+  var _ref10$removeUnusedCl = _ref10.removeUnusedClasses;
+  let removeUnusedClasses = _ref10$removeUnusedCl === undefined ? true : _ref10$removeUnusedCl;
+  var _ref10$recurse = _ref10.recurse;
+  let recurse = _ref10$recurse === undefined ? true : _ref10$recurse;
+  var _ref10$parser = _ref10.parser;
+  let parser = _ref10$parser === undefined ? _getEsImportsExports.defaultParser : _ref10$parser;
+  var _ref10$parserOptions = _ref10.parserOptions;
+  let parserOptions = _ref10$parserOptions === undefined ? _getEsImportsExports.defaultParserOptions : _ref10$parserOptions;
+  var _ref10$resolveOptions = _ref10.resolveOptions;
+  let resolveOptions = _ref10$resolveOptions === undefined ? defaultResolveOptions : _ref10$resolveOptions,
+      Loader = _ref10.Loader;
 
   let styleImportsPromise;
 
@@ -305,10 +306,10 @@ var index = _postcss2.default.plugin('es-css-modules', function () {
       removeUnusedClasses: removeUnusedClasses,
       generateScopedName: generateScopedName,
       file: file
-    })).then(_ref10 => {
-      let styleImports = _ref10.styleImports;
-      let cssToCssModuleMap = _ref10.cssToCssModuleMap;
-      let typesPerName = _ref10.typesPerName;
+    })).then((_ref11) => {
+      let styleImports = _ref11.styleImports,
+          cssToCssModuleMap = _ref11.cssToCssModuleMap,
+          typesPerName = _ref11.typesPerName;
       return new Promise((res, rej) => {
         // They might have a css file that has global styles, but not import it. Allow fallback here
         const moduleFilename = cssToCssModuleMap[file] || file;
@@ -352,8 +353,8 @@ var index = _postcss2.default.plugin('es-css-modules', function () {
           const tokensToExport = (0, _fp.pick)(cssExports, exportTokens);
 
           return { tokensToExport: tokensToExport };
-        }).then(_ref11 => {
-          let tokensToExport = _ref11.tokensToExport;
+        }).then((_ref12) => {
+          let tokensToExport = _ref12.tokensToExport;
 
           const styleExports = getStyleExports(tokensToExport);
 

@@ -1,6 +1,6 @@
 {
   "name": "es-css-modules",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "PostCSS plugin that combines CSS Modules and ES Imports",
   "main": "index.js",
   "jsnext:main": "src/index.js",
@@ -24,13 +24,13 @@
     "css-modules-loader-core": "^1.0.0",
     "get-es-imports-exports": "^1.0.4",
     "is-keyword-js": "^1.0.3",
-    "lodash": "4.13.1",
-    "postcss": "^5.0.21",
-    "postcss-remove-classes": "0.0.3",
+    "lodash": "^4.16.6",
+    "postcss": "^5.2.5",
+    "postcss-remove-classes": "^1.0.2",
     "string-hash": "^1.1.0"
   },
   "devDependencies": {
-    "ava": "^0.14.0",
+    "ava": "^0.16.0",
     "babel": "^6.5.2",
     "babel-cli": "^6.8.0",
     "babel-core": "^6.7.6",
@@ -43,6 +43,7 @@
     "babel-plugin-transform-es2015-spread": "^6.6.5",
     "babel-plugin-transform-strict-mode": "^6.6.5",
     "basscss-btn": "^1.1.1",
+    "basscss-btn-primary": "^1.1.0",
     "eslint": "^2.9.0",
     "eslint-config-airbnb-base": "^2.0.0",
     "eslint-plugin-import": "^1.6.1",

@@ -47,7 +47,9 @@ export default (
       );
     }
 
-    if (isClass && !isValidClassname(name)) {
+    if (file === filename && isClass && !isValidClassname(name)) {
+      // Must be current file
+      // `composes: otherwise-invalid-export from 'somewhere-else.css'` is valid
       // Throws within promise, goes to .catch(...)
       throw new Error(`Class name ${name} is invalid`);
     }

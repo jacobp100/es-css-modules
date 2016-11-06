@@ -8,5 +8,5 @@
 }
 
 .primary {
-  composes: btn-primary from 'basscss-btn/index.css';
+  composes: btn-primary from 'basscss-btn-primary/index.css';
 }
