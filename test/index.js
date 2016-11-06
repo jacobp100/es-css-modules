@@ -25,6 +25,7 @@ const animationsVendorPrefixed = join(baseDir, 'animations-vendor-prefixed');
 const multipleStyleDirectories = join(baseDir, 'multiple-style-directories');
 const noCss = join(baseDir, 'no-css');
 const noCssWithBinding = join(baseDir, 'no-css-with-binding');
+const unimportedCss = join(baseDir, 'unimported-css');
 const jsxFile = join(baseDir, 'jsx-file');
 const importWithoutMCss = join(baseDir, 'import-without-m-css');
 
@@ -464,6 +465,28 @@ test.serial('it will ignore binding files when the css file is not found', t => 
     .process(readFileSync(button, 'utf-8'), { from: button })
     .catch((e) => {
       t.true(startsWith('Cannot find module \'./styles/button.m.css\'', e.message));
+    });
+});
+
+test.serial('returns empty css if it is never imported', t => {
+  t.plan(2);
+
+  const button = join(unimportedCss, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(unimportedCss, 'App.js'),
+      getJsExports(name, jsFile) {
+        parseWithDefaultOptions(jsFile);
+        t.pass();
+      },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css }) => {
+      t.is(css.trim(), '');
     });
 });
 
