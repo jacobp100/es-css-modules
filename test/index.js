@@ -16,6 +16,7 @@ const namespaceImportInvalidExportKeyword =
 const namespaceImportInvalidExportHyphen =
   join(baseDir, 'namespace-import-invalid-export-hyphen');
 const composesImport = join(baseDir, 'composes-import');
+const composesFromNpm = join(baseDir, 'composes-from-npm');
 const animations = join(baseDir, 'animations');
 const animationsInvalidJsIdent = join(baseDir, 'animations-invalid-js-ident');
 const animationsDuplicateNames = join(baseDir, 'animations-duplicate-names');
@@ -242,6 +243,29 @@ test.serial('composes import', t => {
   const processor = postcss([
     modulesEs({
       jsFiles: join(composesImport, 'App.js'),
+      getJsExports(name, jsFile) {
+        parseWithDefaultOptions(jsFile);
+        t.pass();
+      },
+    }),
+  ]);
+
+  return processor
+    .process(readFileSync(button, 'utf-8'), { from: button })
+    .then(({ css, messages }) => {
+      t.is(css.indexOf(UNUSED_EXPORT), -1);
+      t.is(messages.length, 0);
+    });
+});
+
+test.serial('composes from npm', t => {
+  t.plan(3);
+
+  const button = join(composesFromNpm, 'styles/button.css');
+
+  const processor = postcss([
+    modulesEs({
+      jsFiles: join(composesFromNpm, 'App.js'),
       getJsExports(name, jsFile) {
         parseWithDefaultOptions(jsFile);
         t.pass();

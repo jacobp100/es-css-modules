@@ -42,6 +42,7 @@
     "babel-plugin-transform-es2015-shorthand-properties": "^6.5.0",
     "babel-plugin-transform-es2015-spread": "^6.6.5",
     "babel-plugin-transform-strict-mode": "^6.6.5",
+    "basscss-btn": "^1.1.1",
     "eslint": "^2.9.0",
     "eslint-config-airbnb-base": "^2.0.0",
     "eslint-plugin-import": "^1.6.1",

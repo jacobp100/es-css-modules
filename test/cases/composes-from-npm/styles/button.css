@@ -1,0 +1,12 @@
+.default {
+  composes: btn from 'basscss-btn/index.css';
+  border: none;
+  margin: 0;
+  padding: 0.5em 1em;
+  border: 0;
+  transition: background 0.1s;
+}
+
+.primary {
+  composes: btn-primary from 'basscss-btn/index.css';
+}
