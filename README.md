@@ -8,6 +8,8 @@ npm install --save-dev es-css-modules
 
 ### [Demo Using Gulp](https://github.com/jacobp100/es-css-modules-demo)
 
+This project *is* still maintained despite low commit activity. Please file an issue if you find any bugs or want to request a feature!
+
 # What and Why?
 
 I’ll assume you are already sold on CSS Modules. If you haven’t used CSS Modules, you should definitely try it!
